@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Uso interno. Cria link simbolico entre o repositorio de desenvolvimento
+# e um site de testes local
+
+if [ ! -d "/alligo/code/" ]; then
+  # Este script nao deveria estar sendo executado. Você por acaso fez
+  # upload da pasta inteira?
+  exit
+fi
+
+REPOSITORIO=/alligo/code/alligo/plg_system_alligovarnish  # Onde está o repositorio?
+WEBPATH=/alligo/web/_/joomla2                             # Onde está o site de de testes
+
+# Apaga repositorios e links
+rm -f $WEBPATH"/plugins/system/alligovarnish/alligovarnish.php"
+[ ! -L $WEBPATH"/plugins/system/alligovarnish/alligovarnish.php" ] && unlink $WEBPATH"/plugins/system/alligovarnish/alligovarnish.php"
+rm -f $WEBPATH"/plugins/system/alligovarnish/alligovarnish.xml"
+[ ! -L $WEBPATH"/plugins/system/alligovarnish/alligovarnish.xml" ] && unlink $WEBPATH"/plugins/system/alligovarnish/alligovarnish.xml"
+
+# Cria links
+ln -s $REPOSITORIO"/alligovarnish.php" $WEBPATH"/plugins/system/alligovarnish/alligovarnish.php"
+ln -s $REPOSITORIO"/alligovarnish.xml" $WEBPATH"/plugins/system/alligovarnish/alligovarnish.xml"

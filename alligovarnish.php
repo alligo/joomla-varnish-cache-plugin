@@ -22,47 +22,81 @@ defined('_JEXEC') or die;
 // else if (('cache-control' !== strtolower($header['name']) && 'pragma' !== strtolower($header['name'])) && JFactory::getApplication()->isSite())
 
 /**
- * Plugin to fake the CMS
+ * Plugin Alligo Varnish
  *
- * @package  ImNotJoomla
- * @since    1.6
+ * @package  Alligo.PlgSystemAlligovarnish
+ * @since    3.4
  */
 class plgSystemAlligovarnish extends JPlugin
 {
 
     /**
-     * @see plgSystemePrivacy http://www.richeyweb.com/development/joomla-plugins/111-system-eu-e-privacy-directive
-     * @copyright (C) 2010-2011 RicheyWeb - www.richeyweb.com
-     * @return void
+     * This plugin is running on Joomla frontend?
+     *
+     * @var Boolean 
      */
-    private function _cleanHeaders()
+    protected $is_site = false;
+
+    /**
+     * Menu item ID (is is running on front-end)
+     *
+     * @var Integer 
+     */
+    protected $itemid = 0;
+
+    /**
+     * Parsed proxy cache exeptions for each menu item id
+     *
+     * @var Array 
+     */
+    protected $exptproxy = [];
+
+    /**
+     * Parsed browser exeptions for each menu item id
+     *
+     * @var Array 
+     */
+    protected $exptbrowser = [];
+
+    /**
+     * Debug info
+     *
+     * @var Array 
+     */
+    protected $debug = [];
+
+    /**
+     * Explode lines and itens separed by : and return and array,
+     * with debug option if syntax error
+     * 
+     * @param   Array   $string  String to be converted
+     * @return  Array
+     */
+    private function _getTimes($string)
     {
+        $times = [];
+        if (!empty($string)) {
+            $lines = explode("\r\n", $string);
 
-        $session = JFactory::getSession();
-        $session->destroy();
-        //session_unset();
-        //session_destroy();
-        //JResponse::setHeader('Cache-control', 'public', false);
-        //JResponse::setHeader('Cache-control', 'cache', true);
-        //JResponse::setHeader('Pragma', 'cache', true);
+            foreach ($lines AS $line) {
+                $itemid_hour = explode(":", $line);
 
-        JResponse::allowCache(false);
-        JFactory::getCache()->setCaching(false);
-        $hasheaders = false;
-        foreach (headers_list() as $header) {
-            if ($hasheaders)
-                continue;
-            if (preg_match('/Set-Cookie/', $header)) {
-                $hasheaders = true;
+                if (count($itemid_hour) < 2) {
+                    $this->debug['wrongtime'] = empty($this->debug['wrongtime']) ? $line : $this->debug['wrongtime'] . ',' . $line;
+                } else {
+                    if (substr($itemid_hour[1], 0, 1) === "0") {
+                        // Do not cache this
+                        $times[(int) $itemid_hour[0]] = false;
+                    } else if (!in_array(substr($itemid_hour[1], -1), ['s', 'h', 'd', 'w', 'm', 'y'])) {
+                        $this->debug['wrongtime'] = empty($this->debug['wrongtime']) ? $line : $this->debug['wrongtime'] . ',' . $line;
+                    } else {
+                        $times[(int) $itemid_hour[0]] = $itemid_hour[1];
+                    }
+                }
             }
         }
-        if (!$hasheaders)
-            return;
-        if (version_compare(phpversion(), 5.3, '>=')) {
-            header_remove('Set-Cookie');
-        } else {
-            header('Set-Cookie:');
-        }
+
+        return $times;
     }
 
     /**
@@ -77,9 +111,10 @@ class plgSystemAlligovarnish extends JPlugin
      */
     public function onAfterInitialise()
     {
-        if (JFactory::getApplication()->isSite()) {
-            $this->_cleanHeaders();
-        }
+        $this->is_site = JFactory::getApplication()->isSite();
+//        if (JFactory::getApplication()->isSite()) {
+//            $this->_cleanHeaders();
+//        }
     }
 
     public function onBeforeCompileHead()
@@ -94,9 +129,16 @@ class plgSystemAlligovarnish extends JPlugin
 
     public function onBeforeRender()
     {
-        if (JFactory::getApplication()->isSite()) {
-            $this->_cleanHeaders();
+        if ($this->is_site) {
+
+            $this->itemid = JFactory::getApplication()->getMenu()->getActive()->id;
+            $this->exptproxy = $this->_getTimes($this->params->get('exptproxy', ''));
+            $this->exptbrowser = $this->_getTimes($this->params->get('exptbrowser', ''));
         }
+
+//        if (JFactory::getApplication()->isSite()) {
+//            $this->_cleanHeaders();
+//        }
     }
 
     /**
@@ -118,34 +160,5 @@ class plgSystemAlligovarnish extends JPlugin
 //            $session->destroy();
 //            //session_unset();
 //        }
-    }
-
-    /**
-     * _hideHeaders
-     * 
-     * @package  ImNotJoomla
-     * @since    1.6
-     * 
-     * @return   void
-     */
-    private function _hideHeaders()
-    {
-        #header_remove('X-Powered-By');// JResponse::setHeader('X-Powered-By', '', true);
-    }
-
-    /**
-     * _hideHeaders
-     * 
-     * @deprecated
-     * @package  ImNotJoomla
-     * @since    1.6
-     * 
-     * @deprecated
-     * @return   void
-     */
-    private function _trollHeaders()
-    {
-        //header_remove('X-Powered-By');
-        JResponse::setHeader('X-Powered-By', 'ASP.NET', true); // I.e.: header('X-Powered-By: ASP.NET');
     }
 }
