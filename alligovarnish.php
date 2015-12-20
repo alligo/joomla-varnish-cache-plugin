@@ -66,6 +66,13 @@ class plgSystemAlligovarnish extends JPlugin
     protected $exptproxy = [];
 
     /**
+     * Extra headers enabled?
+     *
+     * @var Array 
+     */
+    protected $extrainfo = 0;
+
+    /**
      * This plugin is running on Joomla frontend?
      *
      * @var Boolean 
@@ -166,6 +173,66 @@ class plgSystemAlligovarnish extends JPlugin
     }
 
     /**
+     * onAfterInitialise
+     * 
+     * This event is triggered after the framework has loaded and the application initialise method has been called.
+     * 
+     * @return   void
+     */
+    public function onAfterInitialise()
+    {
+        $this->is_site = JFactory::getApplication()->isSite();
+    }
+
+    function onAfterDispatch()
+    {
+        $this->prepareToCache();
+    }
+
+    /**
+     * This event is triggered after the framework has rendered the application.
+     * 
+     * Rendering is the process of pushing the document buffers into the 
+     * template placeholders, retrieving data from the document and pushing 
+     * it into the JResponse buffer.
+     * 
+     * When this event is triggered the output of the application is available in the response buffer.
+     * 
+     * @return   void
+     */
+    public function onAfterRender()
+    {
+        $this->prepareToCache();
+    }
+
+    /**
+     * This event is triggered before the framework creates the Head section of the Document.
+     */
+    public function onBeforeCompileHead()
+    {
+        $this->prepareToCache();
+        // @todo Feature: maybe implement a way to set robots "nofollow" if site
+        // is not behind varnish cache
+        //if (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] !== 80) {
+        //    JFactory::getDocument()->setMetaData('robots', 'noindex, nofollow');
+        //}
+    }
+
+    /**
+     * This event is triggered immediately before the framework has rendered
+     *  the application. 
+     * 
+     * Rendering is the process of pushing the document buffers into the 
+     * template placeholders, retrieving data from the document and pushing it 
+     * into the JResponse buffer.
+     */
+    public function onBeforeRender()
+    {
+        // Esse talvez não precise
+        $this->prepareToCache();
+    }
+
+    /**
      * Set cache. Should be called ONLY on Joomla front-end. Backend
      * should call $this->setCacheProxy(null) for ensure no cache;
      *
@@ -252,12 +319,18 @@ class plgSystemAlligovarnish extends JPlugin
                 JFactory::getApplication()->setHeader('X-Alligo-BrowserCache', 'disabled');
             }
         } else {
+            date_default_timezone_set('GMT');
             $epoch = strtotime('+' . $time . 's');
 
             JFactory::getApplication()->allowCache(true);
             JFactory::getApplication()->setHeader('Cache-Control', 'public, max-age=' . $time, true);
             JFactory::getApplication()->setHeader('Pragma', 'cache', true);
             JFactory::getApplication()->setHeader('Expires', date('D, j M Y H:i:s T', $epoch), true);
+            if ($this->extrainfo) {
+                JFactory::getApplication()->setHeader('X-Cache-Control', 'public, max-age=' . $time, true);
+                JFactory::getApplication()->setHeader('X-Pragma', 'cache');
+                JFactory::getApplication()->setHeader('X-Expires', date('D, j M Y H:i:s T', $epoch), true);
+            }
             if ($this->debug_is) {
                 JFactory::getApplication()->setHeader('X-Alligo-BrowserCache', 'enabled, ' . $time . 's, datetime ' . date('D, j M Y H:i:s T', $epoch));
             }
@@ -277,6 +350,7 @@ class plgSystemAlligovarnish extends JPlugin
                 JFactory::getApplication()->setHeader('X-Alligo-ProxyCache', 'disabled');
             }
         } else {
+            date_default_timezone_set('GMT');
             $epoch = strtotime('+' . $time . 's');
             //JFactory::getApplication()->setHeader('Surrogate-Control', 'public, max-age=' . $time, true);
             //JFactory::getApplication()->setHeader('Surrogate-Control', 'max-age=' . $time . ' + ' . $this->stale_time . ', content="ESI/1.0"', true);
@@ -288,39 +362,14 @@ class plgSystemAlligovarnish extends JPlugin
     }
 
     /**
-     * onAfterInitialise
+     * More than one plugin WILL try to change headers that define cache, so
+     * its sad, but we need to setup more than one time this call. Remember
+     * that just put on last event maybe will not work, because its not
+     * very sure that will trigger the last event
      * 
-     * This event is triggered after the framework has loaded and the application initialise method has been called.
-     * 
-     * @return   void
+     * @see https://docs.joomla.org/Plugin/Events/System
      */
-    public function onAfterInitialise()
-    {
-        $this->is_site = JFactory::getApplication()->isSite();
-    }
-
-    /**
-     * This event is triggered before the framework creates the Head section of the Document.
-     */
-    public function onBeforeCompileHead()
-    {
-
-        // @todo Feature: maybe implement a way to set robots "nofollow" if site
-        // is not behind varnish cache
-        //if (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] !== 80) {
-        //    JFactory::getDocument()->setMetaData('robots', 'noindex, nofollow');
-        //}
-    }
-
-    /**
-     * This event is triggered immediately before the framework has rendered
-     *  the application. 
-     * 
-     * Rendering is the process of pushing the document buffers into the 
-     * template placeholders, retrieving data from the document and pushing it 
-     * into the JResponse buffer.
-     */
-    public function onBeforeRender()
+    public function prepareToCache()
     {
         if ($this->is_site) {
 
@@ -330,57 +379,7 @@ class plgSystemAlligovarnish extends JPlugin
             $this->browsertime = $this->_getTimeAsSeconds($this->params->get('browsertime', ''));
             $this->exptproxy = $this->_getTimes($this->params->get('exptproxy', ''));
             $this->exptbrowser = $this->_getTimes($this->params->get('exptbrowser', ''));
-            $this->debug_is = (bool) $this->params->get('debug', false);
-            $this->setCache();
-        } else {
-
-            // Tip for varnish that we REALLY do not want cache this
-            $this->setCacheProxy(null);
-        }
-        if ($this->debug_is && count($this->debug)) {
-            JFactory::getApplication()->setHeader('X-Alligo-Debug', json_encode($this->debug), true);
-        }
-
-//        if (JFactory::getApplication()->isSite()) {
-//            $this->_cleanHeaders();
-//        }
-    }
-
-    /**
-     * This event is triggered after the framework has rendered the application.
-     * 
-     * Rendering is the process of pushing the document buffers into the 
-     * template placeholders, retrieving data from the document and pushing 
-     * it into the JResponse buffer.
-     * 
-     * When this event is triggered the output of the application is available in the response buffer.
-     * 
-     * @return   void
-     */
-    public function onAfterRender()
-    {
-//        if (JFactory::getApplication()->isSite()) {
-////            $this->_cleanHeaders();
-////            session_unset();
-//        }
-//        if (JFactory::getApplication()->isSite()) {
-//
-//            // Destroi a sessão apenas se for usuário do site
-//            JResponse::setHeader('Cache-control', 'public', true);
-//            $session = JFactory::getSession();
-//            $session->destroy();
-//            //session_unset();
-//        }
-
-        // @todo Testando local aonde deveriam ficar esses parametros. Remover no futuro (fititnt, 2015-12-20 08:56)
-        if ($this->is_site) {
-
-            $menu_active = JFactory::getApplication()->getMenu()->getActive();
-            $this->itemid = empty($menu_active) || empty($menu_active->id) ? 0 : (int) $menu_active->id;
-            $this->varnishtime = $this->_getTimeAsSeconds($this->params->get('varnishtime', ''));
-            $this->browsertime = $this->_getTimeAsSeconds($this->params->get('browsertime', ''));
-            $this->exptproxy = $this->_getTimes($this->params->get('exptproxy', ''));
-            $this->exptbrowser = $this->_getTimes($this->params->get('exptbrowser', ''));
+            $this->extrainfo = (bool) $this->params->get('extrainfo', false);
             $this->debug_is = (bool) $this->params->get('debug', false);
             $this->setCache();
         } else {
