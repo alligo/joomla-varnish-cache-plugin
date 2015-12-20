@@ -31,32 +31,11 @@ class plgSystemAlligovarnish extends JPlugin
 {
 
     /**
-     * This plugin is running on Joomla frontend?
-     *
-     * @var Boolean 
+     * Default time for browser time, if not specified on $exptbrowser
+     * 
+     * @var Integer
      */
-    protected $is_site = false;
-
-    /**
-     * Menu item ID (is is running on front-end)
-     *
-     * @var Integer 
-     */
-    protected $itemid = 0;
-
-    /**
-     * Parsed proxy cache exeptions for each menu item id
-     *
-     * @var Array 
-     */
-    protected $exptproxy = [];
-
-    /**
-     * Parsed browser exeptions for each menu item id
-     *
-     * @var Array 
-     */
-    protected $exptbrowser = [];
+    protected $browsertime = 0;
 
     /**
      * Debug info
@@ -72,6 +51,47 @@ class plgSystemAlligovarnish extends JPlugin
      */
     protected $debug_is = false;
 
+    /**
+     * Parsed browser exeptions for each menu item id
+     *
+     * @var Array 
+     */
+    protected $exptbrowser = [];
+
+    /**
+     * Parsed proxy cache exeptions for each menu item id
+     *
+     * @var Array 
+     */
+    protected $exptproxy = [];
+
+    /**
+     * This plugin is running on Joomla frontend?
+     *
+     * @var Boolean 
+     */
+    protected $is_site = false;
+
+    /**
+     * Menu item ID (is is running on front-end)
+     *
+     * @var Integer 
+     */
+    protected $itemid = 0;
+
+    /**
+     * Default time for proxy time, if not specified on $exptproxy
+     * 
+     * @var Integer
+     */
+    protected $varnishtime = 0;
+
+    /**
+     * Convert a string terminated by s, m, d or y to seconds
+     * 
+     * @param   String   $time
+     * @return  Integer  Time in seconds
+     */
     private function _getTimeAsSeconds($time)
     {
         $seconds = 0;
@@ -88,15 +108,13 @@ class plgSystemAlligovarnish extends JPlugin
                     $seconds = (int) substr($time, 0, -1);
                     $seconds = $seconds * 60 * 24;
                     break;
-                case 'm':
-                    $seconds = (int) substr($time, 0, -1);
-                    $seconds = $seconds * 60 * 24 * 30;
-                    break;
                 case 'y':
                     $seconds = (int) substr($time, 0, -1);
                     $seconds = $seconds * 60 * 24 * 30 * 365;
                     break;
                 default:
+
+                    // ¯\_(ツ)_/¯
                     $seconds = (int) $time;
                     break;
             }
@@ -140,11 +158,82 @@ class plgSystemAlligovarnish extends JPlugin
     }
 
     /**
+     * Set cache. Should be called ONLY on Joomla front-end. Backend
+     * should call $this->setCacheProxy(null) for ensure no cache;
+     *
+     * @see setCacheBrowser()
+     * @see setCacheProxy()
+     */
+    public function setCache()
+    {
+        if ($this->setCacheExceptions()) {
+            return;
+        }
+
+        $debug_has_defaults = '';
+        // Exist specific instruction for Proxy cache time? No? Use defaults
+        if (!empty($this->exptproxy[$this->itemid])) {
+            $this->setCacheProxy($this->exptproxy[$this->itemid]);
+            $debug_has_defaults .= 'Custom proxy time';
+        } else {
+            $this->setCacheProxy($this->varnishtime);
+            $debug_has_defaults .= 'Default proxy time';
+        }
+
+        // Exist specific instruction for Broser cache time? No? Use defaults
+        if (!empty($this->exptbrowser[$this->itemid])) {
+            $this->setCacheBrowser($this->exptbrowser[$this->itemid]);
+            $debug_has_defaults .= ', Custom browser time';
+        } else {
+            $this->setCacheBrowser($this->browsertime);
+            $debug_has_defaults .= ', Default browser time';
+        }
+        if ($this->debug_is) {
+            JFactory::getApplication()->setHeader('X-Alligo-JoomlaItemId', $this->itemid, true);
+            JFactory::getApplication()->setHeader('X-Alligo-CacheTimes', $debug_has_defaults, true);
+        }
+    }
+
+    /**
+     * Some places of Jooma should never cache
+     * 
+     * @todo    Ainda não está funcional da forma como está sendo chamada. Deve
+     *          ser chamada em fase mais inicial da sequencia de eventos do
+     *          Joomla (fititnt, 2015-12-20 07:27)
+     *
+     * @reutuns Boolean
+     */
+    protected function setCacheExceptions()
+    {
+        $component = JFactory::getApplication()->input->getCmd('option', '');
+        $reason = false;
+        if ($component === 'com_ajax') {
+            $this->setCacheProxy(false);
+            $reason = 'Ajax Request';
+        } else if ($component === 'com_banners') {
+            $task = JFactory::getApplication()->input->getCmd('task', '');
+            if ($task === 'click') {
+                $this->setCacheProxy(false);
+                $reason = 'Ajax Request';
+            }
+        }
+        if ($reason) {
+            $this->setCacheProxy(null);
+            if ($this->debug_is) {
+                JFactory::getApplication()->setHeader('X-Alligo-ProxyCache', 'disabled');
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
      * Set headers specific for the browser cache
      * 
      * @param   Integer   $time
      */
-    public function setCacheBrowser($time = null)
+    protected function setCacheBrowser($time = null)
     {
         if (empty($time)) {
             JFactory::getApplication()->allowCache(false);
@@ -172,7 +261,7 @@ class plgSystemAlligovarnish extends JPlugin
      * 
      * @param   Integer   $time
      */
-    public function setCacheProxy($time = null)
+    protected function setCacheProxy($time = null)
     {
         if (empty($time)) {
             JFactory::getApplication()->setHeader('Surrogate-Control', 'no-store', true);
@@ -225,16 +314,18 @@ class plgSystemAlligovarnish extends JPlugin
     {
         if ($this->is_site) {
 
-            $this->itemid = JFactory::getApplication()->getMenu()->getActive()->id;
+            $menu_active = JFactory::getApplication()->getMenu()->getActive();
+            $this->itemid = empty($menu_active) || empty($menu_active->id) ? 0 : (int) $menu_active->id;
+            $this->varnishtime = $this->_getTimeAsSeconds($this->params->get('varnishtime', ''));
+            $this->browsertime = $this->_getTimeAsSeconds($this->params->get('browsertime', ''));
             $this->exptproxy = $this->_getTimes($this->params->get('exptproxy', ''));
             $this->exptbrowser = $this->_getTimes($this->params->get('exptbrowser', ''));
             $this->debug_is = (bool) $this->params->get('debug', false);
-            $this->setCacheBrowser(300);
-            $this->setCacheProxy(300);
+            $this->setCache();
         } else {
 
             // Tip for varnish that we REALLY do not want cache this
-            $this->setCacheProxy(false);
+            $this->setCacheProxy(null);
         }
 
 //        if (JFactory::getApplication()->isSite()) {
