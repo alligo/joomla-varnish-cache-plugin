@@ -1,32 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension
-	version="3.4"
-	type="plugin"
-	group="system"
-	method="upgrade"
-	>
-	<name>PLG_SYSTEM_ALLIGOVARNISH</name>
-	<author>Emerson Rocha Luiz</author>
-	<creationDate>2015-12-20</creationDate>
-	<copyright>Copyright (C) 2015 Alligo Ltda. All rights reserved.</copyright>
-	<license>GNU General Public License version 3. See license.txt</license>
-	<authorEmail>emerson@alligo.com.br</authorEmail>
-	<authorUrl>http://fititnt.org</authorUrl>
-	<version>1.0</version>
-	<description>PLG_SYSTEM_ALLIGOVARNISH_XML_DESCRIPTION</description>
-	<files>
-		<filename plugin="alligovarnish">alligovarnish.php</filename>
-		<filename>index.html</filename>
-	</files>
-	<languages folder="language">
-		<language tag="en-GB">en-GB/en-GB.plg_system_alligovarnish.ini</language>
-		<language tag="en-GB">en-GB/en-GB.plg_system_alligovarnish.sys.ini</language>
-		<language tag="pt-BR">pt-BR/pt-BR.plg_system_alligovarnish.ini</language>
-		<language tag="pt-BR">pt-BR/pt-BR.plg_system_alligovarnish.sys.ini</language>
-	</languages>
-	<config>
-		<fields name="params">
-
-		</fields>
-	</config>
+  version="3.4"
+  type="plugin"
+  group="system"
+  method="upgrade"
+>
+  <name>PLG_SYSTEM_ALLIGOVARNISH</name>
+  <author>Emerson Rocha Luiz</author>
+  <creationDate>2015-12-20</creationDate>
+  <copyright>Copyright (C) 2015 Alligo Ltda. All rights reserved.</copyright>
+  <license>GNU General Public License version 3. See license.txt</license>
+  <authorEmail>emerson@alligo.com.br</authorEmail>
+  <authorUrl>http://fititnt.org</authorUrl>
+  <version>1.0</version>
+  <description>PLG_SYSTEM_ALLIGOVARNISH_XML_DESCRIPTION</description>
+  <files>
+    <filename plugin="alligovarnish">alligovarnish.php</filename>
+    <filename>index.html</filename>
+  </files>
+  <languages folder="language">
+    <language tag="en-GB">en-GB/en-GB.plg_system_alligovarnish.ini</language>
+    <language tag="en-GB">en-GB/en-GB.plg_system_alligovarnish.sys.ini</language>
+    <language tag="pt-BR">pt-BR/pt-BR.plg_system_alligovarnish.ini</language>
+    <language tag="pt-BR">pt-BR/pt-BR.plg_system_alligovarnish.sys.ini</language>
+  </languages>
+  <config>
+    <fields name="params">
+      <fieldset name="basic">
+        <field name="varnishtime"
+               type="text"
+               default="300s"
+               label="PLG_SYSTEM_ALLIGOVARNISH_VARNISHTIME"
+               description="PLG_SYSTEM_ALLIGOVARNISH_VARNISHTIME_DESC"
+               size="4" />
+        <field name="browsertime"
+               type="text"
+               default="300s"
+               label="PLG_SYSTEM_ALLIGOVARNISH_BROWSERTIME"
+               description="PLG_SYSTEM_ALLIGOVARNISH_BROWSERTIME_DESC"
+               size="4" />
+        <field
+          name="exptproxy"
+          type="textarea"
+          default=""
+          hint="MenuID:CacheTime\n101:120s\n102:2m\n103:3h"
+          label="PLG_SYSTEM_ALLIGOVARNISH_EXTPROXY"
+          description="PLG_SYSTEM_ALLIGOVARNISH_EXTPROXY_DESC"
+          rows="10"
+          cols="5" 
+        />
+        <field
+          name="exptbrowser"
+          type="textarea"
+          default=""
+          hint="MenuID:CacheTime\n101:120s\n102:2m\n103:3h"
+          label="PLG_SYSTEM_ALLIGOVARNISH_BROWSER"
+          description="PLG_SYSTEM_ALLIGOVARNISH_BROWSER_DESC"
+          rows="10"
+          cols="5" 
+        />
+        <field name="debug" type="radio"
+               class="btn-group btn-group-yesno"
+               default="0"
+               label="PLG_SYSTEM_ALLIGOVARNISH_DEBUG"
+               description="PLG_SYSTEM_ALLIGOVARNISH_DEBUG"
+        >
+          <option value="1">JYES</option>
+          <option value="0">JNO</option>
+        </field>
+      </fieldset>
+    </fields>
+  </config>
 </extension>
