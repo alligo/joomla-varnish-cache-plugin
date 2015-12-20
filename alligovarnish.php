@@ -1,12 +1,10 @@
 <?php
-
 /**
- * @package    ImNotJoomla
- * @author     Emerson Rocha Luiz <emerson@webdesign.eng.br>
+ * @package    Alligo.PlgSystemAlligovarnish
+ * @author     Emerson Rocha Luiz <emerson@alligo.com.br>
  * @copyright  Copyright (C) 2015 Alligo Ltda. All rights reserved.
  * @license    GNU General Public License version 3. See license.txt
  */
-// No direct access
 defined('_JEXEC') or die;
 
 
@@ -29,7 +27,7 @@ defined('_JEXEC') or die;
  * @package  ImNotJoomla
  * @since    1.6
  */
-class plgSystemImnotjoomla extends JPlugin
+class plgSystemAlligovarnish extends JPlugin
 {
 
     /**
@@ -89,9 +87,9 @@ class plgSystemImnotjoomla extends JPlugin
         if (JFactory::getApplication()->isSite()) {
             $this->_cleanHeaders();
         }
-        if (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] !== 80) {
-            JFactory::getDocument( )->setMetaData( 'robots', 'noindex, nofollow' );
-        }
+        //if (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] !== 80) {
+        //    JFactory::getDocument()->setMetaData('robots', 'noindex, nofollow');
+        //}
     }
 
     public function onBeforeRender()
