@@ -87,6 +87,14 @@ class plgSystemAlligovarnish extends JPlugin
     protected $varnishtime = 0;
 
     /**
+     * Time to inform Varnish cache that contend can be used as old
+     * object from cache even if expired
+     *
+     * @var Integer 
+     */
+    protected $stale_time = 30;
+
+    /**
      * Convert a string terminated by s, m, d or y to seconds
      * 
      * @param   String   $time
@@ -270,7 +278,9 @@ class plgSystemAlligovarnish extends JPlugin
             }
         } else {
             $epoch = strtotime('+' . $time . 's');
-            JFactory::getApplication()->setHeader('Surrogate-Control', 'public, max-age=' . $time, true);
+            //JFactory::getApplication()->setHeader('Surrogate-Control', 'public, max-age=' . $time, true);
+            //JFactory::getApplication()->setHeader('Surrogate-Control', 'max-age=' . $time . ' + ' . $this->stale_time . ', content="ESI/1.0"', true);
+            JFactory::getApplication()->setHeader('Surrogate-Control', 'max-age=' . $time . '+' . $this->stale_time, true);
             if ($this->debug_is) {
                 JFactory::getApplication()->setHeader('X-Alligo-ProxyCache', 'enabled, ' . $time . 's, datetime ' . date('D, j M Y H:i:s T', $epoch));
             }
@@ -327,6 +337,9 @@ class plgSystemAlligovarnish extends JPlugin
             // Tip for varnish that we REALLY do not want cache this
             $this->setCacheProxy(null);
         }
+        if ($this->debug_is && count($this->debug)) {
+            JFactory::getApplication()->setHeader('X-Alligo-Debug', json_encode($this->debug), true);
+        }
 
 //        if (JFactory::getApplication()->isSite()) {
 //            $this->_cleanHeaders();
@@ -358,5 +371,25 @@ class plgSystemAlligovarnish extends JPlugin
 //            $session->destroy();
 //            //session_unset();
 //        }
+
+        // @todo Testando local aonde deveriam ficar esses parametros. Remover no futuro (fititnt, 2015-12-20 08:56)
+        if ($this->is_site) {
+
+            $menu_active = JFactory::getApplication()->getMenu()->getActive();
+            $this->itemid = empty($menu_active) || empty($menu_active->id) ? 0 : (int) $menu_active->id;
+            $this->varnishtime = $this->_getTimeAsSeconds($this->params->get('varnishtime', ''));
+            $this->browsertime = $this->_getTimeAsSeconds($this->params->get('browsertime', ''));
+            $this->exptproxy = $this->_getTimes($this->params->get('exptproxy', ''));
+            $this->exptbrowser = $this->_getTimes($this->params->get('exptbrowser', ''));
+            $this->debug_is = (bool) $this->params->get('debug', false);
+            $this->setCache();
+        } else {
+
+            // Tip for varnish that we REALLY do not want cache this
+            $this->setCacheProxy(null);
+        }
+        if ($this->debug_is && count($this->debug)) {
+            JFactory::getApplication()->setHeader('X-Alligo-Debug', json_encode($this->debug), true);
+        }
     }
 }
