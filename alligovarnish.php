@@ -186,7 +186,7 @@ class plgSystemAlligovarnish extends JPlugin
 
     function onAfterDispatch()
     {
-        $this->prepareToCache();
+        $this->is_site && $this->prepareToCache();
     }
 
     /**
@@ -202,7 +202,7 @@ class plgSystemAlligovarnish extends JPlugin
      */
     public function onAfterRender()
     {
-        $this->prepareToCache();
+        $this->is_site && $this->prepareToCache();
     }
 
     /**
@@ -210,7 +210,7 @@ class plgSystemAlligovarnish extends JPlugin
      */
     public function onBeforeCompileHead()
     {
-        $this->prepareToCache();
+        $this->is_site && $this->prepareToCache();
         // @todo Feature: maybe implement a way to set robots "nofollow" if site
         // is not behind varnish cache
         //if (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] !== 80) {
@@ -229,7 +229,7 @@ class plgSystemAlligovarnish extends JPlugin
     public function onBeforeRender()
     {
         // Esse talvez não precise
-        $this->prepareToCache();
+        $this->is_site && $this->prepareToCache();
     }
 
     /**
@@ -319,8 +319,8 @@ class plgSystemAlligovarnish extends JPlugin
                 JFactory::getApplication()->setHeader('X-Alligo-BrowserCache', 'disabled');
             }
         } else {
-            date_default_timezone_set('GMT');
-            $epoch = strtotime('+' . $time . 's');
+            //date_default_timezone_set('GMT');
+            $epoch = strtotime('+' . $time . 's', JFactory::getDate()->getTimestamp());
 
             JFactory::getApplication()->allowCache(true);
             JFactory::getApplication()->setHeader('Cache-Control', 'public, max-age=' . $time, true);
@@ -350,8 +350,9 @@ class plgSystemAlligovarnish extends JPlugin
                 JFactory::getApplication()->setHeader('X-Alligo-ProxyCache', 'disabled');
             }
         } else {
-            date_default_timezone_set('GMT');
-            $epoch = strtotime('+' . $time . 's');
+
+            //date_default_timezone_set('GMT');
+            $epoch = strtotime('+' . $time . 's', JFactory::getDate()->getTimestamp());
             //JFactory::getApplication()->setHeader('Surrogate-Control', 'public, max-age=' . $time, true);
             //JFactory::getApplication()->setHeader('Surrogate-Control', 'max-age=' . $time . ' + ' . $this->stale_time . ', content="ESI/1.0"', true);
             JFactory::getApplication()->setHeader('Surrogate-Control', 'max-age=' . $time . '+' . $this->stale_time, true);
@@ -371,6 +372,18 @@ class plgSystemAlligovarnish extends JPlugin
      */
     public function prepareToCache()
     {
+        if ($this->debug_is) {
+            // Se o varnish estiver enviando heades iniciadas com X-Joomla, 
+            // devolver ao cliente final
+
+            foreach ($_SERVER AS $key => $value) {
+                if (strpos(strtolower($key), 'x_joomla')) {
+                    $xheader = str_replace('_', '-', str_replace('http_', '', strtolower($key)));
+                    JFactory::getApplication()->setHeader($xheader, $value, true);
+                }
+            }
+        }
+
         if ($this->is_site) {
 
             $menu_active = JFactory::getApplication()->getMenu()->getActive();
