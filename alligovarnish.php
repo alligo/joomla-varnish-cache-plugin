@@ -311,7 +311,7 @@ class plgSystemAlligovarnish extends JPlugin
     protected function setCacheBrowser($time = null)
     {
         if (empty($time)) {
-            JFactory::getApplication()->allowCache(false);
+            //JFactory::getApplication()->allowCache(false);
             JFactory::getApplication()->setHeader('Cache-Control', 'no-cache, no-store, must-revalidate', true);
             JFactory::getApplication()->setHeader('Pragma', 'no-cache', true);
             JFactory::getApplication()->setHeader('Expires', '0', true);
@@ -322,7 +322,7 @@ class plgSystemAlligovarnish extends JPlugin
             //date_default_timezone_set('GMT');
             $epoch = strtotime('+' . $time . 's', JFactory::getDate()->getTimestamp());
 
-            JFactory::getApplication()->allowCache(true);
+            //JFactory::getApplication()->allowCache(true);
             JFactory::getApplication()->setHeader('Cache-Control', 'public, max-age=' . $time, true);
             JFactory::getApplication()->setHeader('Pragma', 'cache', true);
             JFactory::getApplication()->setHeader('Expires', date('D, j M Y H:i:s T', $epoch), true);
