@@ -291,7 +291,14 @@ class plgSystemAlligovarnish extends JPlugin
                 $this->setCacheProxy(false);
                 $reason = 'Ajax Request';
             }
-        }
+        } else if (!JFactory::getUser()->guest) {
+                $this->setCacheProxy(false);
+                $reason = 'joomla_logged_in';
+		} else if ($component === 'com_users') {
+                $this->setCacheProxy(false);
+                $reason = 'Possible login page?';
+		}
+
         if ($reason) {
             $this->setCacheProxy(null);
             if ($this->debug_is) {
