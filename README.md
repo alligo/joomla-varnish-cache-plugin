@@ -1,5 +1,5 @@
 # Plugin Alligo Varnish
-Version 1.0RC1
+Version 2.0RC1
 
 Joomla CMS plugin that allow the CMS make a more agressive cache with Varnish Cache 6
 

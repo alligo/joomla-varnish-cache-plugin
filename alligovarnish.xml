@@ -23,6 +23,13 @@
     <language tag="pt-BR">pt-BR/pt-BR.plg_system_alligovarnish.ini</language>
     <language tag="pt-BR">pt-BR/pt-BR.plg_system_alligovarnish.sys.ini</language>
   </languages>
+
+<!--
+- https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
+- https://varnish-cache.org/docs/trunk/users-guide/vcl-grace.html
+-->
+
+
   <config>
     <fields name="params">
       <fieldset name="basic">
@@ -76,6 +83,57 @@
           <option value="1">JYES</option>
           <option value="0">JNO</option>
         </field>
+      </fieldset>
+
+      <!-- 
+        stale-if-error
+        - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
+        - https://www.fastly.com/blog/stale-while-revalidate-stale-if-error-available-today
+        - https://docs.varnish-software.com/varnish-cache-plus/vmods/stale/
+      -->
+
+      <fieldset name="advanced">
+        <field name="stale-if-error_enabled" type="radio"
+               class="btn-group btn-group-yesno"
+               default="0"
+               label="PLG_SYSTEM_ALLIGOVARNISH_STALE_IF_ERROR_ENABLED"
+               description="PLG_SYSTEM_ALLIGOVARNISH_STALE_IF_ERROR_ENABLED_DESC"
+        >
+          <option value="1">JYES</option>
+          <option value="0">JNO</option>
+        </field>
+        <field name="stale-if-error"
+               showon="stale-if-error_enabled:1"
+               type="text"
+               default="60s"
+               label="PLG_SYSTEM_ALLIGOVARNISH_STALE_IF_ERROR"
+               description="PLG_SYSTEM_ALLIGOVARNISH_STALE_IF_ERROR_DESC"
+               size="4" />
+      </fieldset>
+
+      <!-- 
+        stale-if-error
+        - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
+        - https://www.fastly.com/blog/stale-while-revalidate-stale-if-error-available-today
+      -->
+
+      <fieldset name="advanced">
+        <field name="stale-while-revalidate_enabled" type="radio"
+               class="btn-group btn-group-yesno"
+               default="0"
+               label="PLG_SYSTEM_ALLIGOVARNISH_STALE_WHILE_REVALIDATE_ENABLED"
+               description="PLG_SYSTEM_ALLIGOVARNISH_STALE_WHILE_REVALIDATE_DESC"
+        >
+          <option value="1">JYES</option>
+          <option value="0">JNO</option>
+        </field>
+        <field name="stale-while-revalidate"
+               showon="stale-while-revalidate_enabled:1"
+               type="text"
+               default="60s"
+               label="PLG_SYSTEM_ALLIGOVARNISH_STALE_WHILE_REVALIDATE"
+               description="PLG_SYSTEM_ALLIGOVARNISH_STALE_WHILE_REVALIDATE_DESC"
+               size="4" />
       </fieldset>
     </fields>
   </config>
