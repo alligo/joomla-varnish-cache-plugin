@@ -1,7 +1,7 @@
 # Plugin Alligo Varnish
-Version 1.0.0beta - Do not use in production yet
+Version 1.0RC1
 
-Joomla CMS plugin that allow the CMS make a more agressive cache with Varnish Cache 4
+Joomla CMS plugin that allow the CMS make a more agressive cache with Varnish Cache 6
 
 Other links to see
 - [Joomla CMS banners module for Joomla + Varnish](https://github.com/alligo/mod_banners4varnish)

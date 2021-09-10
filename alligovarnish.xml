@@ -6,17 +6,16 @@
   method="upgrade"
 >
   <name>PLG_SYSTEM_ALLIGOVARNISH</name>
-  <author>Emerson Rocha Luiz</author>
+  <author>Emerson Rocha</author>
   <creationDate>2015-12-20</creationDate>
   <copyright>Copyright (C) 2015 Alligo Ltda. All rights reserved.</copyright>
   <license>GNU General Public License version 3. See license.txt</license>
   <authorEmail>emerson@alligo.com.br</authorEmail>
   <authorUrl>http://fititnt.org</authorUrl>
-  <version>1.0.0beta</version>
+  <version>1.0RC1</version>
   <description>PLG_SYSTEM_ALLIGOVARNISH_XML_DESCRIPTION</description>
   <files>
     <filename plugin="alligovarnish">alligovarnish.php</filename>
-    <filename>index.html</filename>
   </files>
   <languages folder="language">
     <language tag="en-GB">en-GB/en-GB.plg_system_alligovarnish.ini</language>
@@ -47,7 +46,7 @@
           label="PLG_SYSTEM_ALLIGOVARNISH_EXTPROXY"
           description="PLG_SYSTEM_ALLIGOVARNISH_EXTPROXY_DESC"
           rows="10"
-          cols="5"
+          cols="5" 
         />
         <field
           name="exptbrowser"
@@ -57,7 +56,7 @@
           label="PLG_SYSTEM_ALLIGOVARNISH_BROWSER"
           description="PLG_SYSTEM_ALLIGOVARNISH_BROWSER_DESC"
           rows="10"
-          cols="5"
+          cols="5" 
         />
         <field name="extrainfo" type="radio"
                class="btn-group btn-group-yesno"
