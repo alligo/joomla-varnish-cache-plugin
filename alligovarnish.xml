@@ -127,7 +127,6 @@
           label="PLG_SYSTEM_ALLIGOVARNISH_STALE_IF_ERROR"
           description="PLG_SYSTEM_ALLIGOVARNISH_STALE_IF_ERROR_DESC"
           size="4"/>
-      </fieldset>
 
       <!--
         stale-if-error
@@ -135,7 +134,6 @@
         - https://www.fastly.com/blog/stale-while-revalidate-stale-if-error-available-today
       -->
 
-      <fieldset name="advanced">
         <field
           name="stale-while-revalidate_enabled"
           type="radio"
@@ -154,7 +152,6 @@
           label="PLG_SYSTEM_ALLIGOVARNISH_STALE_WHILE_REVALIDATE"
           description="PLG_SYSTEM_ALLIGOVARNISH_STALE_WHILE_REVALIDATE_DESC"
           size="4"/>
-      </fieldset>
 
       <!--
         stale-if-error
@@ -162,7 +159,6 @@
         - https://www.fastly.com/blog/stale-while-revalidate-stale-if-error-available-today
       -->
 
-      <fieldset name="advanced">
         <field
           name="must-revalidate_enabled"
           type="radio"
@@ -174,128 +170,182 @@
           <option value="0">JNO</option>
         </field>
       </fieldset>
+
+      <fieldset
+        name="never"
+        description="This section can be used to explicitly define what will should be ignored by default behavior of assuming everything on the Joomla frontend should be cached. Some features will also allow giving extra hints for Varnish and equivalent caching mechanisms. Not all features are likely to be used, but this allows some flexibility in special if frontend cache need explicit information about the reason to not cache."
+        >
+
+        <field
+          name="never_logged_enabled"
+          type="radio"
+          class="btn-group btn-group-yesno"
+          default="1"
+          label="Ignore logged users"
+          description=""
+        >
+          <option value="1">JYES</option>
+          <option value="0">JNO</option>
+        </field>
+
+        <field
+          name="never_logged_cookie_enabled"
+          showon="never_logged_enabled:1"
+          type="radio"
+          class="btn-group btn-group-yesno"
+          default="1"
+          label="Add cookie for logged users"
+          description=""
+        >
+          <option value="1">JYES</option>
+          <option value="0">JNO</option>
+        </field>
+
+        <field
+          name="never_logged_cookie"
+          showon="never_logged_enabled:1[AND]never_logged_cookie_enabled:1"
+          type="text"
+          default="x-logged-in=True"
+          hint="x-logged-in=True"
+          label="Browser cookies for logged in users."
+          description="If not empty, add a cookie=value. Value 0 will disable it"
+          class="input-xxlarge"
+        />
+
+        <field
+          name="never_logged_cookie_ttl"
+          showon="never_logged_enabled:1[AND]never_logged_cookie_enabled:1"
+          type="text"
+          hint="900s"
+          default="900s"
+          label="Logged-in cookie TTL"
+          description="If using non-empty Logged-in cookie, the expiration time. Value 0 will disable it"
+        />
+
+        <field type="spacer" name="spacer-b" hr="true" />
+
+        <field
+          name="never_option_enabled"
+          type="radio"
+          class="btn-group btn-group-yesno"
+          default=""
+          label="Ignore by Joomla component"
+          description="Define Joomla components to ignore. One per"
+        >
+          <option value="1">JYES</option>
+          <option value="0">JNO</option>
+        </field>
+
+        <field
+          name="never_option"
+          showon="never_option_enabled:1"
+          type="textarea"
+          default="com_ajax&#xA;com_banners&#xA;com_users"
+          hint="com_ajax\ncom_banner\ncom_users"
+          label="Components to not cache"
+          description="Joomla component to never try cache. One per line"
+          rows="10"
+          cols="5"
+        />
+
+        <field
+          name="never_option_httpheader"
+          showon="never_option_enabled:1"
+          type="text"
+          label="Custom HTTP header for component exceptions"
+          hint="Surrogate-Control: private, no-store"
+          default=""
+          description="If never_option enabled, non empty value here will add (not replace) a custom HTTP header"
+          class="input-xxlarge"
+        />
+
+        <field type="spacer" name="spacer-c" hr="true" />
+
+        <field
+          name="never_prefix_enabled"
+          type="radio"
+          class="btn-group btn-group-yesno"
+          default=""
+          label="Ignore by URL prefixes"
+          description="Ignore by URL prefixes. One per line"
+        >
+          <option value="1">JYES</option>
+          <option value="0">JNO</option>
+        </field>
+        <field
+          name="never_prefix"
+          showon="never_prefix_enabled:1"
+          type="textarea"
+          default=""
+          hint="/login\n/contact"
+          label="URL prefix to never try cache"
+          description="URLs to never try cache. One per line"
+          rows="10"
+          cols="5"
+        />
+
+        <field
+          name="never_prefix_httpheader"
+          showon="never_prefix_enabled:1"
+          type="text"
+          label="Custom HTTP header for URL prefixes exceptions"
+          hint="Surrogate-Control: private, no-store"
+          default=""
+          description=""
+          class="input-xxlarge"
+        />
+
+        <field type="spacer" name="spacer-d" hr="true" />
+
+        <field
+          name="never_itemid_enabled"
+          type="radio"
+          class="btn-group btn-group-yesno"
+          default="0"
+          label="Ignore by Joomla menu ItemIDs"
+          description="Joomla menu ItemIDs. One per line"
+        >
+          <option value="1">JYES</option>
+          <option value="0">JNO</option>
+        </field>
+
+        <field
+          name="never_itemid"
+          showon="never_itemid_enabled:1"
+          type="textarea"
+          default=""
+          hint="101\n123\n4567"
+          label="Never try cache (Joomla ID)"
+          description="Joomla Menu IDs to never cache. One per line"
+          rows="10"
+          cols="5"
+        />
+
+        <field
+          name="never_itemid_httpheader"
+          showon="never_itemid_enabled:1"
+          type="text"
+          label="Custom HTTP header for Joomla ItemID exceptions"
+          hint="Surrogate-Control: private, no-store"
+          default=""
+          description=""
+          class="input-xxlarge"
+        />
+      </fieldset>
+
+      <fieldset name="typical">
+        <field
+          name="max-age-default"
+          showon="never_logged:1"
+          type="text"
+          default=""
+          label="Never logged cookie TTL"
+          description="If using non-empty Never logged cookie, the expiration time"
+          size="4"
+        />
+
+      </fieldset>
+
     </fields>
-
-    <fieldset
-      name="never"
-      description="This section can be used to explicitly define what will should be ignored by default behavior of assuming everything on the Joomla frontend should be cached. Some features will also allow giving extra hints for Varnish and equivalent caching mechanisms. Not all features are likely to be used, but this allows some flexibility in special if frontend cache need explicit information about the reason to not cache."
-      >
-      <field
-        name="never_logged"
-        type="radio"
-        class="btn-group btn-group-yesno"
-        default="1"
-        label="Never try to cache logged user"
-        description="Not only disable cache, but give extra headers"
-      >
-        <option value="1">JYES</option>
-        <option value="0">JNO</option>
-      </field>
-
-      <field
-        name="never_logged_cookie"
-        showon="never_logged:1"
-        type="text"
-        default="x-logged-in=True"
-        label="Logged-in cookie=value"
-        description="Give a hint for Varnish when user was previously logged"
-        size="4"
-      />
-
-      <field
-        name="never_logged_cookie_ttl"
-        showon="never_logged:1"
-        type="text"
-        default="900s"
-        label="Logged-in cookie TTL"
-        description="If using non-empty Logged-in cookie, the expiration time"
-        size="4"
-      />
-
-      <field type="spacer" name="spacer-b" hr="true" />
-
-      <field
-        name="never_option_enabled"
-        type="radio"
-        class="btn-group btn-group-yesno"
-        default="1"
-        label="Ignore by Joomla component"
-        description="Define Joomla components to ignore. One per"
-      >
-        <option value="1">JYES</option>
-        <option value="0">JNO</option>
-      </field>
-
-      <field
-        name="never_option"
-        showon="never_option_enabled:1"
-        type="textarea"
-        default="com_ajax&#xA;com_banners&#xA;com_users"
-        hint="com_ajax\ncom_banner\ncom_users"
-        label="Components to not cache"
-        description="Joomla component to never try cache. One per line"
-        rows="10"
-        cols="5"
-      />
-
-      <field
-        name="never_option_httpheader"
-        showon="never_option_enabled:1"
-        type="text"
-        label="Custom HTTP header for component exceptions"
-        hint="Surrogate-Control: private, no-store"
-        default=""
-        description="If never_option enabled, non empty value here will add (not replace) a custom HTTP header"
-      />
-
-      <field
-        name="never_prefix_enabled"
-        type="radio"
-        class="btn-group btn-group-yesno"
-        default="0"
-        label="Ignore by URL prefixes"
-        description="Ignore by URL prefixes. One per line"
-      >
-        <option value="1">JYES</option>
-        <option value="0">JNO</option>
-      </field>
-      <field
-        name="never_prefix"
-        showon="never_prefix_enabled:1"
-        type="textarea"
-        default=""
-        hint="/login\n/contact"
-        label="URL prefix to never try cache"
-        description="URLs to never try cache. One per line"
-        rows="10"
-        cols="5"
-      />
-
-      <field
-        name="never_itemid"
-        type="textarea"
-        default=""
-        hint="101\n123\n4567"
-        label="Never try cache (Joomla ID)"
-        description="Joomla Menu IDs to never cache. One per line"
-        rows="10"
-        cols="5"
-      />
-
-    </fieldset>
-
-    <fieldset name="typical">
-      <field
-        name="max-age-default"
-        showon="never_logged:1"
-        type="text"
-        default=""
-        label="Never logged cookie TTL"
-        description="If using non-empty Never logged cookie, the expiration time"
-        size="4"
-      />
-
-    </fieldset>
-
   </config>
 </extension>
