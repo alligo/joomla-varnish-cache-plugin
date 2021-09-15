@@ -126,7 +126,7 @@
           default="60s"
           label="PLG_SYSTEM_ALLIGOVARNISH_STALE_IF_ERROR"
           description="PLG_SYSTEM_ALLIGOVARNISH_STALE_IF_ERROR_DESC"
-          size="4" />
+          size="4"/>
       </fieldset>
 
       <!--
@@ -153,7 +153,7 @@
           default="60s"
           label="PLG_SYSTEM_ALLIGOVARNISH_STALE_WHILE_REVALIDATE"
           description="PLG_SYSTEM_ALLIGOVARNISH_STALE_WHILE_REVALIDATE_DESC"
-          size="4" />
+          size="4"/>
       </fieldset>
 
       <!--
@@ -176,7 +176,10 @@
       </fieldset>
     </fields>
 
-    <fieldset name="never">
+    <fieldset
+      name="never"
+      description="This section can be used to explicitly define what will should be ignored by default behavior of assuming everything on the Joomla frontend should be cached. Some features will also allow giving extra hints for Varnish and equivalent caching mechanisms. Not all features are likely to be used, but this allows some flexibility in special if frontend cache need explicit information about the reason to not cache."
+      >
       <field
         name="never_logged"
         type="radio"
@@ -193,10 +196,10 @@
         name="never_logged_cookie"
         showon="never_logged:1"
         type="text"
-        default="joomla_logged_in"
-        label="Never logged cookie"
+        default="x-logged-in=True"
+        label="Logged-in cookie=value"
         description="Give a hint for Varnish when user was previously logged"
-        size="4" 
+        size="4"
       />
 
       <field
@@ -204,30 +207,65 @@
         showon="never_logged:1"
         type="text"
         default="900s"
-        label="Never logged cookie TTL"
-        description="If using non-empty Never logged cookie, the expiration time"
-        size="4" 
+        label="Logged-in cookie TTL"
+        description="If using non-empty Logged-in cookie, the expiration time"
+        size="4"
       />
 
       <field type="spacer" name="spacer-b" hr="true" />
 
       <field
+        name="never_option_enabled"
+        type="radio"
+        class="btn-group btn-group-yesno"
+        default="1"
+        label="Ignore by Joomla component"
+        description="Define Joomla components to ignore. One per"
+      >
+        <option value="1">JYES</option>
+        <option value="0">JNO</option>
+      </field>
+
+      <field
         name="never_option"
+        showon="never_option_enabled:1"
         type="textarea"
         default="com_ajax&#xA;com_banners&#xA;com_users"
-        hint="/com_banner\n/com_contact"
-        label="Never try cache (Joomla component)"
+        hint="com_ajax\ncom_banner\ncom_users"
+        label="Components to not cache"
         description="Joomla component to never try cache. One per line"
         rows="10"
         cols="5"
       />
 
       <field
+        name="never_option_httpheader"
+        showon="never_option_enabled:1"
+        type="text"
+        label="Custom HTTP header for component exceptions"
+        hint="Surrogate-Control: private, no-store"
+        default=""
+        description="If never_option enabled, non empty value here will add (not replace) a custom HTTP header"
+      />
+
+      <field
+        name="never_prefix_enabled"
+        type="radio"
+        class="btn-group btn-group-yesno"
+        default="0"
+        label="Ignore by URL prefixes"
+        description="Ignore by URL prefixes. One per line"
+      >
+        <option value="1">JYES</option>
+        <option value="0">JNO</option>
+      </field>
+      <field
         name="never_prefix"
+        showon="never_prefix_enabled:1"
         type="textarea"
         default=""
         hint="/login\n/contact"
-        label="Never try cache (URL prefix)"
+        label="URL prefix to never try cache"
         description="URLs to never try cache. One per line"
         rows="10"
         cols="5"
@@ -242,6 +280,19 @@
         description="Joomla Menu IDs to never cache. One per line"
         rows="10"
         cols="5"
+      />
+
+    </fieldset>
+
+    <fieldset name="typical">
+      <field
+        name="max-age-default"
+        showon="never_logged:1"
+        type="text"
+        default=""
+        label="Never logged cookie TTL"
+        description="If using non-empty Never logged cookie, the expiration time"
+        size="4"
       />
 
     </fieldset>

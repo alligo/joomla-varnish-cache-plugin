@@ -20,6 +20,9 @@ defined('_JEXEC') or die;
 // Nota: (infelizmente) alterado core do joomla, na linha a seguir, como solução temporária de contorno (fititnt, 2014-12-28 14:04)
 // \libraries\joomla\response\response.php line 137 (de else para):
 // else if (('cache-control' !== strtolower($header['name']) && 'pragma' !== strtolower($header['name'])) && JFactory::getApplication()->isSite())
+// https://github.com/joomla/joomla-cms/pull/10373
+// https://gist.github.com/fevangelou/84d2ce05896cab5f730a
+
 
 /**
  * Plugin Alligo Varnish
@@ -116,16 +119,24 @@ class plgSystemAlligovarnish extends JPlugin
                     $seconds = (int) substr($time, 0, -1);
                     break;
                 case 'm':
-                    $seconds = (int) substr($time, 0, -1);
-                    $seconds = $seconds * 60;
+                    $minutes = (int) substr($time, 0, -1);
+                    $seconds = $minutes * 60;
+                    break;
+                case 'h':
+                    $hour = (int) substr($time, 0, -1);
+                    $seconds = $hour * 60 * 60;
                     break;
                 case 'd':
-                    $seconds = (int) substr($time, 0, -1);
-                    $seconds = $seconds * 60 * 24;
+                    $days = (int) substr($time, 0, -1);
+                    $seconds = $days * 24 * 60 * 60;
+                    break;
+                case 'M':
+                    $months = (int) substr($time, 0, -1);
+                    $seconds = $months * 30 * 24 * 60 * 60;
                     break;
                 case 'y':
-                    $seconds = (int) substr($time, 0, -1);
-                    $seconds = $seconds * 60 * 24 * 30 * 365;
+                    $years = (int) substr($time, 0, -1);
+                    $seconds = $years * 365 * 24 * 60 * 60;
                     break;
                 default:
 
