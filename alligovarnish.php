@@ -280,6 +280,16 @@ class plgSystemAlligovarnish extends JPlugin
      */
     protected function setCacheExceptions()
     {
+
+        // https://github.com/fititnt/portogente-infra/blob/7d8931cce3198dbbba89d80a4fe082ab5290d4ac/hack/joomla/plugins/user/joomla/joomla.php
+
+        // https://github.com/fititnt/portogente-infra/blob/7d8931cce3198dbbba89d80a4fe082ab5290d4ac/confs/hades-1/varnish/default.vcl
+        // # Joomla default parameters to force do not cache
+        // if(req.http.Cookie ~ "joomla_logged_in" || req.http.Cookie ~ "joomla_user_state") {
+        //     set req.http.X-Joomla-Varnish-Miss = "SpecialJoomlaCookie";
+        //     return (pass);
+        // }
+
         $component = JFactory::getApplication()->input->getCmd('option', '');
         $reason = false;
         if ($component === 'com_ajax') {

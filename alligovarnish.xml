@@ -175,5 +175,76 @@
         </field>
       </fieldset>
     </fields>
+
+    <fieldset name="never">
+      <field
+        name="never_logged"
+        type="radio"
+        class="btn-group btn-group-yesno"
+        default="1"
+        label="Never try to cache logged user"
+        description="Not only disable cache, but give extra headers"
+      >
+        <option value="1">JYES</option>
+        <option value="0">JNO</option>
+      </field>
+
+      <field
+        name="never_logged_cookie"
+        showon="never_logged:1"
+        type="text"
+        default="joomla_logged_in"
+        label="Never logged cookie"
+        description="Give a hint for Varnish when user was previously logged"
+        size="4" 
+      />
+
+      <field
+        name="never_logged_cookie_ttl"
+        showon="never_logged:1"
+        type="text"
+        default="900s"
+        label="Never logged cookie TTL"
+        description="If using non-empty Never logged cookie, the expiration time"
+        size="4" 
+      />
+
+      <field type="spacer" name="spacer-b" hr="true" />
+
+      <field
+        name="never_option"
+        type="textarea"
+        default="com_ajax&#xA;com_banners&#xA;com_users"
+        hint="/com_banner\n/com_contact"
+        label="Never try cache (Joomla component)"
+        description="Joomla component to never try cache. One per line"
+        rows="10"
+        cols="5"
+      />
+
+      <field
+        name="never_prefix"
+        type="textarea"
+        default=""
+        hint="/login\n/contact"
+        label="Never try cache (URL prefix)"
+        description="URLs to never try cache. One per line"
+        rows="10"
+        cols="5"
+      />
+
+      <field
+        name="never_itemid"
+        type="textarea"
+        default=""
+        hint="101\n123\n4567"
+        label="Never try cache (Joomla ID)"
+        description="Joomla Menu IDs to never cache. One per line"
+        rows="10"
+        cols="5"
+      />
+
+    </fieldset>
+
   </config>
 </extension>
