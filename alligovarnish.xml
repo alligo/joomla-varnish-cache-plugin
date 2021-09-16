@@ -173,6 +173,7 @@
 
       <fieldset
         name="never"
+        label="Exceptions (never try cache this)"
         description="This section can be used to explicitly define what will should be ignored by default behavior of assuming everything on the Joomla frontend should be cached. Some features will also allow giving extra hints for Varnish and equivalent caching mechanisms. Not all features are likely to be used, but this allows some flexibility in special if frontend cache need explicit information about the reason to not cache."
         >
 
@@ -333,16 +334,183 @@
         />
       </fieldset>
 
-      <fieldset name="typical">
+      <fieldset
+        name="typical"
+        label="Typical"
+        description="See also: 1. https://datatracker.ietf.org/doc/html/rfc7234&#xA; 2. https://developers.cloudflare.com/cache/about/cache-control&#xA;"
+        >
+
         <field
-          name="max-age-default"
-          showon="never_logged:1"
+          name="max-age_enabled"
+          type="radio"
+          class="btn-group btn-group-yesno"
+          default="0"
+          label="Cache-Control max-age enabled?"
+          description=""
+        >
+          <option value="0">JNO</option>
+          <option value="1">JYES</option>
+          <option value="2">Custom</option>
+        </field>
+
+        <field
+          name="max-age_default"
+          showon="max-age_enabled:1,2"
           type="text"
-          default=""
-          label="Never logged cookie TTL"
-          description="If using non-empty Never logged cookie, the expiration time"
-          size="4"
+          default="120s"
+          hint="120s"
+          label="max-age (default)"
+          description="Cache-control: max-age=DELTA (default)"
         />
+
+        <!--
+        <field
+          name="max-age_itemid"
+          showon="max-age_enabled:1"
+          type="textarea"
+          default=""
+          hint="[MenuID:CacheTime]\n101|120s\n102|2m\n103|3h"
+          label="max-age (Custom, Menu ID)"
+          description=""
+          rows="10"
+          cols="5"
+        />
+        -->
+
+        <field
+          name="max-age_urllist"
+          showon="max-age_enabled:2"
+          type="textarea"
+          default=""
+          hint="[/page:CacheTime]\n/hotsite-page|30s\n/archive-page|4h"
+          label="max-age (Custom, Exact URL)"
+          description="Apply customization by list of URLs. Use | as separator"
+          rows="5"
+          cols="5"
+          class="input-xxlarge"
+        />
+
+        <field
+          name="max-age_urlprefix"
+          showon="max-age_enabled:2"
+          type="textarea"
+          default=""
+          hint="[/pages/prefix/:CacheTime]\n/hotsite-pages/|30s\n/archived-old-pages/|4h"
+          label="max-age (Custom, URL prefix)"
+          description="Apply customization by list of URLs. Use | as separator"
+          rows="5"
+          cols="5"
+          class="input-xxlarge"
+        />
+
+        <field type="spacer" name="spacer-e" hr="true" />
+
+        <field
+          name="s-maxage_enabled"
+          type="radio"
+          class="btn-group btn-group-yesno"
+          default="1"
+          label="Cache-Control s-maxage enabled?"
+          description=""
+        >
+
+        <option value="0">JNO</option>
+        <option value="1">JYES</option>
+        <option value="2">Custom</option>
+        </field>
+
+        <field
+          name="s-maxage_default"
+          showon="s-maxage_enabled:1,2"
+          type="text"
+          default="15m"
+          hint="15m"
+          label="s-maxage (default)"
+          description="Cache-control: s-maxage=DELTA (default)"
+        />
+
+        <field
+          name="s-maxage_urllist"
+          showon="s-maxage_enabled:2"
+          type="textarea"
+          default=""
+          hint="[/page:CacheTime]\n/hotsite-page|30s\n/archive-page|4h"
+          label="max-age (Custom, Exact URL)"
+          description="Apply customization by list of URLs. Use | as separator"
+          rows="5"
+          cols="5"
+          class="input-xxlarge"
+        />
+
+        <field
+          name="s-maxage_urlprefix"
+          showon="s-maxage_enabled:2"
+          type="textarea"
+          default=""
+          hint="[/pages/prefix/:CacheTime]\n/hotsite-pages/|30s\n/archived-old-pages/|4h"
+          label="s-maxage (Custom, URL prefix)"
+          description="Apply customization by list of URLs. Use | as separator"
+          rows="5"
+          cols="5"
+          class="input-xxlarge"
+        />
+
+        <field type="spacer" name="spacer-f" hr="true" />
+
+        <field
+          name="stale-while-revalidate_enabled"
+          type="radio"
+          class="btn-group btn-group-yesno"
+          default="1"
+          label="Cache-Control stale-while-revalidate enabled?"
+          description=""
+        >
+          <option value="0">JNO</option>
+          <option value="1">JYES</option>
+          <option value="2">Custom</option>
+        </field>
+
+        <field
+          name="stale-while-revalidate_default"
+          showon="stale-while-revalidate_enabled:1,2"
+          type="text"
+          default="120s"
+          hint="120s"
+          label="stale-while-revalidate (default)"
+          description="Cache-control: stale-while-revalidate=DELTA (default)"
+        />
+
+        <field
+          name="stale-while-revalidate_urllist"
+          showon="stale-while-revalidate_enabled:2"
+          type="textarea"
+          default=""
+          hint="[/page:CacheTime]\n/hotsite-page|30s\n/archive-page|4h"
+          label="max-age (Custom, Exact URL)"
+          description="Apply customization by list of URLs. Use | as separator"
+          rows="5"
+          cols="5"
+          class="input-xxlarge"
+        />
+
+        <field
+          name="stale-while-revalidate_urlprefix"
+          showon="stale-while-revalidate_enabled:2"
+          type="textarea"
+          default=""
+          hint="[/pages/prefix/:CacheTime]\n/hotsite-pages/|30s\n/archived-old-pages/|4h"
+          label="stale-while-revalidate (Custom, URL prefix)"
+          description="Apply customization by list of URLs. Use | as separator"
+          rows="5"
+          cols="5"
+          class="input-xxlarge"
+        />
+
+        <field type="spacer" name="spacer-g" hr="true" />
+
+        <!--
+          TODO: stale-if-error=TIME
+        -->
 
       </fieldset>
 
