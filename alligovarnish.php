@@ -7,7 +7,6 @@
  */
 defined('_JEXEC') or die;
 
-
 // Modo com hack no core do Joomla! 2.5
 // @see http://forum.joomla.org/viewtopic.php?f=621&t=720647
 // \libraries\joomla\session\session.php line 115:
@@ -22,7 +21,6 @@ defined('_JEXEC') or die;
 // else if (('cache-control' !== strtolower($header['name']) && 'pragma' !== strtolower($header['name'])) && JFactory::getApplication()->isSite())
 // https://github.com/joomla/joomla-cms/pull/10373
 // https://gist.github.com/fevangelou/84d2ce05896cab5f730a
-
 
 /**
  * Plugin Alligo Varnish
@@ -48,8 +46,15 @@ class plgSystemAlligovarnish extends JPlugin
     const EXCEPT_COMPONENT = 2;
 
     /**
+     * Constant to express that is URL prefix
+     *
+     * @var int
+     */
+    const EXCEPT_URLPREFIX = 3;
+
+    /**
      * Default time for browser time, if not specified on $exptbrowser
-     * 
+     *
      * @var Integer
      */
     protected $browsertime = 0;
@@ -57,7 +62,7 @@ class plgSystemAlligovarnish extends JPlugin
     /**
      * Debug info
      *
-     * @var Array 
+     * @var Array
      */
     protected $debug = [];
 
@@ -71,41 +76,41 @@ class plgSystemAlligovarnish extends JPlugin
     /**
      * Parsed browser exeptions for each menu item id
      *
-     * @var Array 
+     * @var Array
      */
     protected $exptbrowser = [];
 
     /**
      * Parsed proxy cache exeptions for each menu item id
      *
-     * @var Array 
+     * @var Array
      */
     protected $exptproxy = [];
 
     /**
      * Extra headers enabled?
      *
-     * @var Array 
+     * @var Array
      */
     protected $extrainfo = 0;
 
     /**
      * This plugin is running on Joomla frontend?
      *
-     * @var Boolean 
+     * @var Boolean
      */
     protected $is_site = false;
 
     /**
      * Menu item ID (is is running on front-end)
      *
-     * @var Integer 
+     * @var Integer
      */
     protected $itemid = 0;
 
     /**
      * Default time for proxy time, if not specified on $exptproxy
-     * 
+     *
      * @var Integer
      */
     protected $varnishtime = 0;
@@ -119,7 +124,7 @@ class plgSystemAlligovarnish extends JPlugin
      * Time to inform Varnish cache that contend can be used as old
      * object from cache even if expired
      *
-     * @var Integer 
+     * @var Integer
      */
     protected $stale_time = 30;
 
@@ -144,7 +149,7 @@ class plgSystemAlligovarnish extends JPlugin
 
     /**
      * Convert a string terminated by s, m, d or y to seconds
-     * 
+     *
      * @param   String   $time
      * @return  Integer  Time in seconds
      */
@@ -190,7 +195,7 @@ class plgSystemAlligovarnish extends JPlugin
     /**
      * Explode lines and itens separed by : and return and array,
      * with debug option if syntax error
-     * 
+     *
      * @param   Array   $string  String to be converted
      * @return  Array
      */
@@ -200,7 +205,7 @@ class plgSystemAlligovarnish extends JPlugin
         if (!empty($string)) {
             $lines = explode("\r\n", $string);
 
-            foreach ($lines AS $line) {
+            foreach ($lines as $line) {
                 // TODO: remove separator :
                 if (strpos($line, '|') !== false) {
                     $parts = explode("|", $line);
@@ -231,24 +236,43 @@ class plgSystemAlligovarnish extends JPlugin
      *
      * @return Int
      */
-    private function _isException() {
+    private function _isException()
+    {
         if ((int) $this->params->get('never_logged_enabled') > 0) {
             if (!JFactory::getUser()->guest) {
                 return self::EXCEPT_LOGGED;
             }
         }
-        // if ((int) $this->params->get('never_logged_enabled') > 0) {
-        //     if (!JFactory::getUser()->guest) {
-        //         return self::EXCEPT_COMPONENT;
-        //     }
-        // }
+        if ((int) $this->params->get('never_option_enabled') > 0) {
+            $raw = $this->params->get('never_option', '');
+            $lines = explode("\r\n", $raw);
+            if (in_array(JFactory::getApplication()->input->get('option'), $lines)) {
+                return self::EXCEPT_COMPONENT;
+            }
+        }
+        if ((int) $this->params->get('never_prefix_enabled') > 0) {
+            $raw = $this->params->get('never_prefix', '');
+            $lines = array_filter(explode("\r\n", $raw));
+            $uri = \Joomla\CMS\Uri\Uri::getInstance();
+            $cpath = str_replace($uri->base(false), '/', JURI::current());
+            foreach ($lines as $key => $value) {
+                if (strlen($value) > 1) { // No '' or '/'
+                    if (strpos($cpath, $value) === 0) {
+                        return self::EXCEPT_URLPREFIX;
+                    }
+                }
+            }
+        }
+        // return print_r($lines, true);
+        // return JFactory::getApplication()->input->get('option');
+        return 0;
     }
 
     /**
      * onAfterInitialise
-     * 
+     *
      * This event is triggered after the framework has loaded and the application initialise method has been called.
-     * 
+     *
      * @return   void
      */
     public function onAfterInitialise()
@@ -256,20 +280,20 @@ class plgSystemAlligovarnish extends JPlugin
         $this->is_site = JFactory::getApplication()->isSite();
     }
 
-    function onAfterDispatch()
+    public function onAfterDispatch()
     {
         $this->is_site && $this->prepareToCache();
     }
 
     /**
      * This event is triggered after the framework has rendered the application.
-     * 
-     * Rendering is the process of pushing the document buffers into the 
-     * template placeholders, retrieving data from the document and pushing 
+     *
+     * Rendering is the process of pushing the document buffers into the
+     * template placeholders, retrieving data from the document and pushing
      * it into the JResponse buffer.
-     * 
+     *
      * When this event is triggered the output of the application is available in the response buffer.
-     * 
+     *
      * @return   void
      */
     public function onAfterRender()
@@ -293,10 +317,10 @@ class plgSystemAlligovarnish extends JPlugin
 
     /**
      * This event is triggered immediately before the framework has rendered
-     *  the application. 
-     * 
-     * Rendering is the process of pushing the document buffers into the 
-     * template placeholders, retrieving data from the document and pushing it 
+     *  the application.
+     *
+     * Rendering is the process of pushing the document buffers into the
+     * template placeholders, retrieving data from the document and pushing it
      * into the JResponse buffer.
      */
     public function onBeforeRender()
@@ -344,7 +368,7 @@ class plgSystemAlligovarnish extends JPlugin
 
     /**
      * Some places of Jooma should never cache
-     * 
+     *
      * @todo    Ainda não está funcional da forma como está sendo chamada. Deve
      *          ser chamada em fase mais inicial da sequencia de eventos do
      *          Joomla (fititnt, 2015-12-20 07:27)
@@ -375,11 +399,11 @@ class plgSystemAlligovarnish extends JPlugin
                 $reason = 'Ajax Request';
             }
         } else if (!JFactory::getUser()->guest) {
-                $this->setCacheProxy(false);
-                $reason = 'joomla_logged_in';
+            $this->setCacheProxy(false);
+            $reason = 'joomla_logged_in';
         } else if ($component === 'com_users') {
-                $this->setCacheProxy(false);
-                $reason = 'Possible login page?';
+            $this->setCacheProxy(false);
+            $reason = 'Possible login page?';
         }
 
         if ($reason) {
@@ -395,7 +419,7 @@ class plgSystemAlligovarnish extends JPlugin
 
     /**
      * Set headers specific for the browser cache
-     * 
+     *
      * @param   Integer   $time
      */
     protected function setCacheBrowser($time = null)
@@ -429,7 +453,7 @@ class plgSystemAlligovarnish extends JPlugin
 
     /**
      * Set headers specific for the proxy cache
-     * 
+     *
      * @param   Integer   $time
      */
     protected function setCacheProxy($time = null)
@@ -457,16 +481,19 @@ class plgSystemAlligovarnish extends JPlugin
      * its sad, but we need to setup more than one time this call. Remember
      * that just put on last event maybe will not work, because its not
      * very sure that will trigger the last event
-     * 
+     *
      * @see https://docs.joomla.org/Plugin/Events/System
      */
     public function prepareToCache()
     {
         if ($this->debug_is) {
-            // Se o varnish estiver enviando heades iniciadas com X-Joomla, 
+            // Se o varnish estiver enviando heades iniciadas com X-Joomla,
             // devolver ao cliente final
 
-            foreach ($_SERVER AS $key => $value) {
+            $result = $this->_isException();
+            echo '<!--' . $result . '--!>';
+
+            foreach ($_SERVER as $key => $value) {
                 if (strpos(strtolower($key), 'x_joomla')) {
                     $xheader = str_replace('_', '-', str_replace('http_', '', strtolower($key)));
                     JFactory::getApplication()->setHeader($xheader, $value, true);
