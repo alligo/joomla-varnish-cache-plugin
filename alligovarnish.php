@@ -34,6 +34,20 @@ class plgSystemAlligovarnish extends JPlugin
 {
 
     /**
+     * Constant to express that is logged user
+     *
+     * @var int
+     */
+    const EXCEPT_LOGGED = 1;
+
+    /**
+     * Constant to express that is Joomla component
+     *
+     * @var int
+     */
+    const EXCEPT_COMPONENT = 2;
+
+    /**
      * Default time for browser time, if not specified on $exptbrowser
      * 
      * @var Integer
@@ -97,12 +111,36 @@ class plgSystemAlligovarnish extends JPlugin
     protected $varnishtime = 0;
 
     /**
+     * @var Array
+     */
+    // public $params = [];
+
+    /**
      * Time to inform Varnish cache that contend can be used as old
      * object from cache even if expired
      *
      * @var Integer 
      */
     protected $stale_time = 30;
+
+    // /**
+    //  * Constructor.
+    //  *
+    //  * @param   object  &$subject  The object to observe.
+    //  * @param   array   $config    An optional associative array of configuration settings.
+    //  *
+    //  */
+    // public function __construct($subject, $config)
+    // {
+    //     // Calling the parent Constructor
+    //     parent::__construct($subject, $config);
+
+    //     // $this->params = $config->params;
+
+    //     // Do some extra initialisation in this constructor if required
+
+    //     //echo '<!--' . print_r($config, true) . '--!>';
+    // }
 
     /**
      * Convert a string terminated by s, m, d or y to seconds
@@ -163,24 +201,47 @@ class plgSystemAlligovarnish extends JPlugin
             $lines = explode("\r\n", $string);
 
             foreach ($lines AS $line) {
-                $itemid_hour = explode(":", $line);
+                // TODO: remove separator :
+                if (strpos($line, '|') !== false) {
+                    $parts = explode("|", $line);
+                } else {
+                    $parts = explode(":", $line);
+                }
 
-                if (count($itemid_hour) < 2) {
+                if (count($parts) < 2) {
                     $this->debug['wrongtime'] = empty($this->debug['wrongtime']) ? $line : $this->debug['wrongtime'] . ',' . $line;
                 } else {
-                    if (substr($itemid_hour[1], 0, 1) === "0") {
+                    if (substr($parts[1], 0, 1) === "0") {
                         // Do not cache this
-                        $times[(int) $itemid_hour[0]] = false;
-                    } else if (!in_array(substr($itemid_hour[1], -1), ['s', 'h', 'd', 'w', 'm', 'y'])) {
+                        $times[(int) $parts[0]] = false;
+                    } else if (!in_array(substr($parts[1], -1), ['s', 'm', 'h', 'd', 'M', 'y'])) {
                         $this->debug['wrongtime'] = empty($this->debug['wrongtime']) ? $line : $this->debug['wrongtime'] . ',' . $line;
                     } else {
-                        $times[(int) $itemid_hour[0]] = $this->_getTimeAsSeconds($itemid_hour[1]);
+                        $times[(int) $parts[0]] = $this->_getTimeAsSeconds($parts[1]);
                     }
                 }
             }
         }
 
         return $times;
+    }
+
+    /**
+     * Early check if this is an exception and should be totally ignored
+     *
+     * @return Int
+     */
+    private function _isException() {
+        if ((int) $this->params->get('never_logged_enabled') > 0) {
+            if (!JFactory::getUser()->guest) {
+                return self::EXCEPT_LOGGED;
+            }
+        }
+        // if ((int) $this->params->get('never_logged_enabled') > 0) {
+        //     if (!JFactory::getUser()->guest) {
+        //         return self::EXCEPT_COMPONENT;
+        //     }
+        // }
     }
 
     /**
@@ -227,6 +288,7 @@ class plgSystemAlligovarnish extends JPlugin
         //if (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] !== 80) {
         //    JFactory::getDocument()->setMetaData('robots', 'noindex, nofollow');
         //}
+        echo '<!--' . print_r($this->params, true) . '--!>';
     }
 
     /**
@@ -315,10 +377,10 @@ class plgSystemAlligovarnish extends JPlugin
         } else if (!JFactory::getUser()->guest) {
                 $this->setCacheProxy(false);
                 $reason = 'joomla_logged_in';
-		} else if ($component === 'com_users') {
+        } else if ($component === 'com_users') {
                 $this->setCacheProxy(false);
                 $reason = 'Possible login page?';
-		}
+        }
 
         if ($reason) {
             $this->setCacheProxy(null);

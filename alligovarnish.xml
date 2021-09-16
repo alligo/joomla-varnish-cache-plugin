@@ -342,9 +342,10 @@
 
         <field
           name="max-age_enabled"
-          type="radio"
-          class="btn-group btn-group-yesno"
-          default="0"
+          type="list"
+          class=""
+          default="1"
+          filter="integer"
           label="Cache-Control max-age enabled?"
           description=""
         >
@@ -407,9 +408,10 @@
 
         <field
           name="s-maxage_enabled"
-          type="radio"
-          class="btn-group btn-group-yesno"
+          type="list"
+          class=""
           default="1"
+          filter="integer"
           label="Cache-Control s-maxage enabled?"
           description=""
         >
@@ -459,9 +461,10 @@
 
         <field
           name="stale-while-revalidate_enabled"
-          type="radio"
-          class="btn-group btn-group-yesno"
+          type="list"
+          class=""
           default="1"
+          filter="integer"
           label="Cache-Control stale-while-revalidate enabled?"
           description=""
         >
