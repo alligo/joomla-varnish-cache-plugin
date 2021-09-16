@@ -53,6 +53,13 @@ class plgSystemAlligovarnish extends JPlugin
     const EXCEPT_URLPREFIX = 3;
 
     /**
+     * Constant to express that is Joomla ItemID (ID of menu)
+     *
+     * @var int
+     */
+    const EXCEPT_ITEMID = 4;
+
+    /**
      * Default time for browser time, if not specified on $exptbrowser
      *
      * @var Integer
@@ -86,6 +93,9 @@ class plgSystemAlligovarnish extends JPlugin
      * @var Array
      */
     protected $exptproxy = [];
+
+    protected $exception_header_key = '';
+    protected $exception_header_val = '';
 
     /**
      * Extra headers enabled?
@@ -238,18 +248,25 @@ class plgSystemAlligovarnish extends JPlugin
      */
     private function _isException()
     {
+        // TODO: deal with old cookies from logged users
+        //       if they are present on a request
         if ((int) $this->params->get('never_logged_enabled') > 0) {
             if (!JFactory::getUser()->guest) {
+                // $this->_isExceptionCustomHTTPHeader();
                 return self::EXCEPT_LOGGED;
             }
         }
+
         if ((int) $this->params->get('never_option_enabled') > 0) {
             $raw = $this->params->get('never_option', '');
-            $lines = explode("\r\n", $raw);
+            $lines = array_filter(explode("\r\n", $raw));
             if (in_array(JFactory::getApplication()->input->get('option'), $lines)) {
+                $this->_isExceptionCustomHTTPHeader(
+                    $this->params->get('never_option_httpheader', ''));
                 return self::EXCEPT_COMPONENT;
             }
         }
+
         if ((int) $this->params->get('never_prefix_enabled') > 0) {
             $raw = $this->params->get('never_prefix', '');
             $lines = array_filter(explode("\r\n", $raw));
@@ -258,14 +275,35 @@ class plgSystemAlligovarnish extends JPlugin
             foreach ($lines as $key => $value) {
                 if (strlen($value) > 1) { // No '' or '/'
                     if (strpos($cpath, $value) === 0) {
+                        $this->_isExceptionCustomHTTPHeader(
+                            $this->params->get('never_prefix_httpheader', ''));
                         return self::EXCEPT_URLPREFIX;
                     }
                 }
             }
         }
-        // return print_r($lines, true);
-        // return JFactory::getApplication()->input->get('option');
+        if ((int) $this->params->get('never_itemid_enabled') > 0) {
+            $raw = $this->params->get('never_itemid', '');
+            $lines = array_filter(explode("\r\n", $raw));
+            // return print_r($lines, true);
+            // return JFactory::getApplication()->getMenu()->getActive()->id;
+            if (in_array((string) JFactory::getApplication()->getMenu()->getActive()->id, $lines)) {
+                $this->_isExceptionCustomHTTPHeader(
+                    $this->params->get('never_itemid_httpheader', ''));
+                return self::EXCEPT_ITEMID;
+            }
+        }
+
         return 0;
+    }
+
+    private function _isExceptionCustomHTTPHeader($raw_header)
+    {
+        $parts = explode(': ', (string) $raw_header);
+        if (count($parts) == 2) {
+            $this->exception_header_key = $parts[0];
+            $this->exception_header_val = $parts[1];
+        }
     }
 
     /**
@@ -312,7 +350,7 @@ class plgSystemAlligovarnish extends JPlugin
         //if (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] !== 80) {
         //    JFactory::getDocument()->setMetaData('robots', 'noindex, nofollow');
         //}
-        echo '<!--' . print_r($this->params, true) . '--!>';
+        // echo '<!--' . print_r($this->params, true) . '--!>';
     }
 
     /**
@@ -486,12 +524,12 @@ class plgSystemAlligovarnish extends JPlugin
      */
     public function prepareToCache()
     {
+        $exception = $this->_isException();
         if ($this->debug_is) {
             // Se o varnish estiver enviando heades iniciadas com X-Joomla,
             // devolver ao cliente final
 
-            $result = $this->_isException();
-            echo '<!--' . $result . '--!>';
+            // echo '<!--' . $exception . '--!>';
 
             foreach ($_SERVER as $key => $value) {
                 if (strpos(strtolower($key), 'x_joomla')) {
@@ -499,6 +537,23 @@ class plgSystemAlligovarnish extends JPlugin
                     JFactory::getApplication()->setHeader($xheader, $value, true);
                 }
             }
+        }
+
+        // echo '<!--' . $exception . '--!>';
+        // var_dump($exception,$exception > 0);
+        if ($exception > 0) {
+            if ($this->exception_header_key && $this->exception_header_val) {
+                // echo '<!--oi3' . $this->exception_header_key . '--!>';
+                // echo '<!--oi3' . $this->exception_header_key . '--!>';
+                JFactory::getApplication()->setHeader('teste', 'nttttt', true);
+                JFactory::getApplication()->setHeader(
+                    $this->exception_header_key,
+                    $this->exception_header_val, true);
+            }
+            // if ($this->debug_is) {
+            // }
+            // echo '<!--' . $exception . '--!>';
+            // return null;
         }
 
         if ($this->is_site) {
