@@ -7,11 +7,9 @@
  * - PHP PSR-12 https://www.php-fig.org/psr/psr-12/
  * - https://github.com/joomla/joomla-cms/blob/4.0-dev/.php_cs.dist
  *
- * @category  System
- * @package   PlgSystemAlligovarnish
  * @author    Emerson Rocha <emerson@alligo.com.br>
- * @copyright 2015 (C) Alligo Ltda. All rights reserved.
- * @license   GNU General Public License version 3. See license.txt
+ * @copyright 2015 (C) Alligo Ltda.
+ * @license   Public Domain <https://unlicense.org>
  * @link      https://github.com/alligo/joomla_plg_system_alligovarnish
  */
 
@@ -21,19 +19,9 @@
 defined('_JEXEC') or die;
 // phpcs:enable
 
-/**
- * Plugin Alligo Varnish
- *
- * @category  System
- * @package   PlgSystemAlligovarnish
- * @author    Emerson Rocha <emerson@alligo.com.br>
- * @copyright 2015 (C) Alligo Ltda. All rights reserved.
- * @license   GNU General Public License version 3. See license.txt
- * @link      https://github.com/alligo/joomla_plg_system_alligovarnish
- */
+
 class PlgSystemAlligovarnish extends JPlugin // phpcs:ignore
 {
-
     /**
      * Constant to express that is logged user
      *
