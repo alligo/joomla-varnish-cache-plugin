@@ -306,6 +306,16 @@ class plgSystemAlligovarnish extends JPlugin
         }
     }
 
+    private function _isExceptionCustomCookie($raw_header)
+    {
+        throw new Exception('Not implemented');
+    }
+
+    private function _setCache()
+    {
+        throw new Exception('Not implemented');
+    }
+
     /**
      * onAfterInitialise
      *
@@ -539,13 +549,16 @@ class plgSystemAlligovarnish extends JPlugin
             }
         }
 
+        // JFactory::getApplication()->setHeader('x-teste', 'valor-teste', true);
+
         // echo '<!--' . $exception . '--!>';
         // var_dump($exception,$exception > 0);
         if ($exception > 0) {
+            JFactory::getApplication()->setHeader('x-teste2', 'valor-teste2', true);
             if ($this->exception_header_key && $this->exception_header_val) {
                 // echo '<!--oi3' . $this->exception_header_key . '--!>';
                 // echo '<!--oi3' . $this->exception_header_key . '--!>';
-                JFactory::getApplication()->setHeader('teste', 'nttttt', true);
+                // JFactory::getApplication()->setHeader('x-teste', 'valor-teste', true);
                 JFactory::getApplication()->setHeader(
                     $this->exception_header_key,
                     $this->exception_header_val, true);
@@ -556,6 +569,7 @@ class plgSystemAlligovarnish extends JPlugin
             // return null;
         }
 
+        // Deprecated: remove after here
         if ($this->is_site) {
 
             $menu_active = JFactory::getApplication()->getMenu()->getActive();
