@@ -1,34 +1,32 @@
 <?php
 /**
- * @package    Alligo.PlgSystemAlligovarnish
- * @author     Emerson Rocha Luiz <emerson@alligo.com.br>
- * @copyright  Copyright (C) 2015 Alligo Ltda. All rights reserved.
- * @license    GNU General Public License version 3. See license.txt
+ * Joomla Varnish plugin
+ * php version 5.6
+ *
+ * @category  System
+ * @package   PlgSystemAlligovarnish
+ * @author    Emerson Rocha <emerson@alligo.com.br>
+ * @copyright 2015 (C) Alligo Ltda. All rights reserved.
+ * @license   GNU General Public License version 3. See license.txt
+ * @link      https://github.com/alligo/joomla_plg_system_alligovarnish
  */
+
 defined('_JEXEC') or die;
 
-// Modo com hack no core do Joomla! 2.5
-// @see http://forum.joomla.org/viewtopic.php?f=621&t=720647
-// \libraries\joomla\session\session.php line 115:
-//  if (!JFactory::getApplication()->isSite()) {
-//    if (isset($_COOKIE['allowCookies']) || in_array('administrator', explode("/", $_SERVER["REQUEST_URI"]))==true) {
-//        $this->_start();
-//    }
-//
-//
-// Nota: (infelizmente) alterado core do joomla, na linha a seguir, como solução temporária de contorno (fititnt, 2014-12-28 14:04)
-// \libraries\joomla\response\response.php line 137 (de else para):
-// else if (('cache-control' !== strtolower($header['name']) && 'pragma' !== strtolower($header['name'])) && JFactory::getApplication()->isSite())
-// https://github.com/joomla/joomla-cms/pull/10373
-// https://gist.github.com/fevangelou/84d2ce05896cab5f730a
+// https://www.php-fig.org/psr/psr-12/
+// https://www.php-fig.org/psr/psr-2/
 
 /**
  * Plugin Alligo Varnish
  *
- * @package  Alligo.PlgSystemAlligovarnish
- * @since    3.4
+ * @category  System
+ * @package   PlgSystemAlligovarnish
+ * @author    Emerson Rocha <emerson@alligo.com.br>
+ * @copyright 2015 (C) Alligo Ltda. All rights reserved.
+ * @license   GNU General Public License version 3. See license.txt
+ * @link      https://github.com/alligo/joomla_plg_system_alligovarnish
  */
-class plgSystemAlligovarnish extends JPlugin
+class PlgSystemAlligovarnish extends JPlugin
 {
 
     /**
@@ -126,11 +124,6 @@ class plgSystemAlligovarnish extends JPlugin
     protected $varnishtime = 0;
 
     /**
-     * @var Array
-     */
-    // public $params = [];
-
-    /**
      * Time to inform Varnish cache that contend can be used as old
      * object from cache even if expired
      *
@@ -160,8 +153,9 @@ class plgSystemAlligovarnish extends JPlugin
     /**
      * Convert a string terminated by s, m, d or y to seconds
      *
-     * @param   String   $time
-     * @return  Integer  Time in seconds
+     * @param String $time Time string
+     *
+     * @return Integer Time in seconds
      */
     private function _getTimeAsSeconds($time)
     {
@@ -191,8 +185,8 @@ class plgSystemAlligovarnish extends JPlugin
                     $years = (int) substr($time, 0, -1);
                     $seconds = $years * 365 * 24 * 60 * 60;
                     break;
-                default:
 
+                default:
                     // ¯\_(ツ)_/¯
                     $seconds = (int) $time;
                     break;
@@ -206,8 +200,9 @@ class plgSystemAlligovarnish extends JPlugin
      * Explode lines and itens separed by : and return and array,
      * with debug option if syntax error
      *
-     * @param   Array   $string  String to be converted
-     * @return  Array
+     * @param Array $string String to be converted
+     *
+     * @return Array
      */
     private function _getTimes($string)
     {
@@ -262,7 +257,8 @@ class plgSystemAlligovarnish extends JPlugin
             $lines = array_filter(explode("\r\n", $raw));
             if (in_array(JFactory::getApplication()->input->get('option'), $lines)) {
                 $this->_isExceptionCustomHTTPHeader(
-                    $this->params->get('never_option_httpheader', ''));
+                    $this->params->get('never_option_httpheader', '')
+                );
                 return self::EXCEPT_COMPONENT;
             }
         }
@@ -276,7 +272,8 @@ class plgSystemAlligovarnish extends JPlugin
                 if (strlen($value) > 1) { // No '' or '/'
                     if (strpos($cpath, $value) === 0) {
                         $this->_isExceptionCustomHTTPHeader(
-                            $this->params->get('never_prefix_httpheader', ''));
+                            $this->params->get('never_prefix_httpheader', '')
+                        );
                         return self::EXCEPT_URLPREFIX;
                     }
                 }
@@ -289,7 +286,8 @@ class plgSystemAlligovarnish extends JPlugin
             // return JFactory::getApplication()->getMenu()->getActive()->id;
             if (in_array((string) JFactory::getApplication()->getMenu()->getActive()->id, $lines)) {
                 $this->_isExceptionCustomHTTPHeader(
-                    $this->params->get('never_itemid_httpheader', ''));
+                    $this->params->get('never_itemid_httpheader', '')
+                );
                 return self::EXCEPT_ITEMID;
             }
         }
@@ -297,6 +295,15 @@ class plgSystemAlligovarnish extends JPlugin
         return 0;
     }
 
+    /**
+     * Extends _isException()
+     *
+     * @param String $raw_header Raw header string
+     *
+     * @return Void
+     *
+     * @see _isException()
+     */
     private function _isExceptionCustomHTTPHeader($raw_header)
     {
         $parts = explode(': ', (string) $raw_header);
@@ -306,28 +313,54 @@ class plgSystemAlligovarnish extends JPlugin
         }
     }
 
+    /**
+     * Extends _isException()
+     *
+     * @param String $raw_header Raw header string
+     *
+     * @return Void
+     *
+     * @see _isException()
+     */
     private function _isExceptionCustomCookie($raw_header)
     {
         throw new Exception('Not implemented');
     }
 
+    /**
+     * Extends _isException()
+     *
+     * @return Void
+     *
+     * @see _isException()
+     */
     private function _setCache()
     {
         throw new Exception('Not implemented');
     }
 
     /**
-     * onAfterInitialise
+     * This event is triggered after the framework has loaded and the
+     * application initialise method has been called.
      *
-     * This event is triggered after the framework has loaded and the application initialise method has been called.
-     *
-     * @return   void
+     * @return Void
      */
     public function onAfterInitialise()
     {
         $this->is_site = JFactory::getApplication()->isSite();
     }
 
+    /**
+     * This event is triggered after the framework has dispatched the
+     * application.
+     * Dispatching is the process of pulling the option from the request
+     * object and mapping them to a component. If the component does not
+     * exist, it handles determining a default component to dispatch.
+     *
+     * @link https://docs.joomla.org/Plugin/Events/System#onAfterDispatch
+     *
+     * @return Void
+     */
     public function onAfterDispatch()
     {
         $this->is_site && $this->prepareToCache();
@@ -340,9 +373,10 @@ class plgSystemAlligovarnish extends JPlugin
      * template placeholders, retrieving data from the document and pushing
      * it into the JResponse buffer.
      *
-     * When this event is triggered the output of the application is available in the response buffer.
+     * When this event is triggered the output of the application is
+     * available in the response buffer.
      *
-     * @return   void
+     * @return void
      */
     public function onAfterRender()
     {
@@ -350,7 +384,10 @@ class plgSystemAlligovarnish extends JPlugin
     }
 
     /**
-     * This event is triggered before the framework creates the Head section of the Document.
+     * This event is triggered before the framework creates the Head
+     * section of the Document.
+     *
+     * @return Void
      */
     public function onBeforeCompileHead()
     {
@@ -370,6 +407,8 @@ class plgSystemAlligovarnish extends JPlugin
      * Rendering is the process of pushing the document buffers into the
      * template placeholders, retrieving data from the document and pushing it
      * into the JResponse buffer.
+     *
+     * @return Void
      */
     public function onBeforeRender()
     {
@@ -383,6 +422,8 @@ class plgSystemAlligovarnish extends JPlugin
      *
      * @see setCacheBrowser()
      * @see setCacheProxy()
+     *
+     * @return Void
      */
     public function setCache()
     {
@@ -409,31 +450,24 @@ class plgSystemAlligovarnish extends JPlugin
             $debug_has_defaults .= ', Default browser time';
         }
         if ($this->debug_is) {
-            JFactory::getApplication()->setHeader('X-Alligo-JoomlaItemId', $this->itemid, true);
-            JFactory::getApplication()->setHeader('X-Alligo-CacheTimes', $debug_has_defaults, true);
+            JFactory::getApplication()
+                ->setHeader('X-Alligo-JoomlaItemId', $this->itemid, true);
+            JFactory::getApplication()
+                ->setHeader('X-Alligo-CacheTimes', $debug_has_defaults, true);
         }
     }
 
     /**
      * Some places of Jooma should never cache
      *
-     * @todo    Ainda não está funcional da forma como está sendo chamada. Deve
-     *          ser chamada em fase mais inicial da sequencia de eventos do
-     *          Joomla (fititnt, 2015-12-20 07:27)
+     * @todo Ainda não está funcional da forma como está sendo chamada. Deve
+     *       ser chamada em fase mais inicial da sequencia de eventos do
+     *       Joomla (fititnt, 2015-12-20 07:27)
      *
-     * @reutuns Boolean
+     * @return Boolean
      */
     protected function setCacheExceptions()
     {
-
-        // https://github.com/fititnt/portogente-infra/blob/7d8931cce3198dbbba89d80a4fe082ab5290d4ac/hack/joomla/plugins/user/joomla/joomla.php
-
-        // https://github.com/fititnt/portogente-infra/blob/7d8931cce3198dbbba89d80a4fe082ab5290d4ac/confs/hades-1/varnish/default.vcl
-        // # Joomla default parameters to force do not cache
-        // if(req.http.Cookie ~ "joomla_logged_in" || req.http.Cookie ~ "joomla_user_state") {
-        //     set req.http.X-Joomla-Varnish-Miss = "SpecialJoomlaCookie";
-        //     return (pass);
-        // }
 
         $component = JFactory::getApplication()->input->getCmd('option', '');
         $reason = false;
@@ -457,7 +491,8 @@ class plgSystemAlligovarnish extends JPlugin
         if ($reason) {
             $this->setCacheProxy(null);
             if ($this->debug_is) {
-                JFactory::getApplication()->setHeader('X-Alligo-ProxyCache', 'disabled');
+                JFactory::getApplication()
+                    ->setHeader('X-Alligo-ProxyCache', 'disabled');
             }
             return true;
         } else {
@@ -468,33 +503,67 @@ class plgSystemAlligovarnish extends JPlugin
     /**
      * Set headers specific for the browser cache
      *
-     * @param   Integer   $time
+     * @param Integer $time Time in seconds
+     *
+     * @return Void
      */
     protected function setCacheBrowser($time = null)
     {
         if (empty($time)) {
             //JFactory::getApplication()->allowCache(false);
-            JFactory::getApplication()->setHeader('Cache-Control', 'no-cache, no-store, must-revalidate', true);
+            JFactory::getApplication()->setHeader(
+                'Cache-Control',
+                'no-cache, no-store, must-revalidate',
+                true
+            );
             JFactory::getApplication()->setHeader('Pragma', 'no-cache', true);
             JFactory::getApplication()->setHeader('Expires', '0', true);
             if ($this->debug_is) {
-                JFactory::getApplication()->setHeader('X-Alligo-BrowserCache', 'disabled');
+                JFactory::getApplication()->setHeader(
+                    'X-Alligo-BrowserCache',
+                    'disabled'
+                );
             }
         } else {
             //date_default_timezone_set('GMT');
-            $epoch = strtotime('+' . $time . 's', JFactory::getDate()->getTimestamp());
+            $epoch = strtotime(
+                '+' . $time . 's',
+                JFactory::getDate()->getTimestamp()
+            );
 
             //JFactory::getApplication()->allowCache(true);
-            JFactory::getApplication()->setHeader('Cache-Control', 'public, max-age=' . $time, true);
+            JFactory::getApplication()->setHeader(
+                'Cache-Control',
+                'public, max-age=' . $time,
+                true
+            );
             JFactory::getApplication()->setHeader('Pragma', 'cache', true);
-            JFactory::getApplication()->setHeader('Expires', date('D, j M Y H:i:s T', $epoch), true);
+            JFactory::getApplication()->setHeader(
+                'Expires',
+                date('D, j M Y H:i:s T', $epoch),
+                true
+            );
             if ($this->extrainfo) {
-                JFactory::getApplication()->setHeader('X-Cache-Control', 'public, max-age=' . $time, true);
+                JFactory::getApplication()->setHeader(
+                    'X-Cache-Control',
+                    'public, max-age=' . $time,
+                    true
+                );
                 JFactory::getApplication()->setHeader('X-Pragma', 'cache');
-                JFactory::getApplication()->setHeader('X-Expires', date('D, j M Y H:i:s T', $epoch), true);
+                JFactory::getApplication()->setHeader(
+                    'X-Expires',
+                    date('D, j M Y H:i:s T', $epoch),
+                    true
+                );
             }
             if ($this->debug_is) {
-                JFactory::getApplication()->setHeader('X-Alligo-BrowserCache', 'enabled, ' . $time . 's, datetime ' . date('D, j M Y H:i:s T', $epoch));
+                JFactory::getApplication()->setHeader(
+                    'X-Alligo-BrowserCache',
+                    'enabled, ' . $time . 's, datetime ' . date(
+                        'D, j M Y H:i:s T',
+                        $epoch
+                    )
+                );
             }
         }
     }
@@ -502,7 +571,9 @@ class plgSystemAlligovarnish extends JPlugin
     /**
      * Set headers specific for the proxy cache
      *
-     * @param   Integer   $time
+     * @param Integer $time Time in seconds
+     *
+     * @return Void
      */
     protected function setCacheProxy($time = null)
     {
@@ -512,14 +583,26 @@ class plgSystemAlligovarnish extends JPlugin
                 JFactory::getApplication()->setHeader('X-Alligo-ProxyCache', 'disabled');
             }
         } else {
-
             //date_default_timezone_set('GMT');
-            $epoch = strtotime('+' . $time . 's', JFactory::getDate()->getTimestamp());
+            $epoch = strtotime(
+                '+' . $time . 's',
+                JFactory::getDate()->getTimestamp()
+            );
             //JFactory::getApplication()->setHeader('Surrogate-Control', 'public, max-age=' . $time, true);
             //JFactory::getApplication()->setHeader('Surrogate-Control', 'max-age=' . $time . ' + ' . $this->stale_time . ', content="ESI/1.0"', true);
-            JFactory::getApplication()->setHeader('Surrogate-Control', 'max-age=' . $time . '+' . $this->stale_time, true);
+            JFactory::getApplication()->setHeader(
+                'Surrogate-Control',
+                'max-age=' . $time . '+' . $this->stale_time,
+                true
+            );
             if ($this->debug_is) {
-                JFactory::getApplication()->setHeader('X-Alligo-ProxyCache', 'enabled, ' . $time . 's, datetime ' . date('D, j M Y H:i:s T', $epoch));
+                JFactory::getApplication()->setHeader(
+                    'X-Alligo-ProxyCache',
+                    'enabled, ' . $time . 's, datetime ' . date(
+                        'D, j M Y H:i:s T',
+                        $epoch
+                    )
+                );
             }
         }
     }
@@ -531,6 +614,8 @@ class plgSystemAlligovarnish extends JPlugin
      * very sure that will trigger the last event
      *
      * @see https://docs.joomla.org/Plugin/Events/System
+     *
+     * @return Void
      */
     public function prepareToCache()
     {
@@ -543,7 +628,11 @@ class plgSystemAlligovarnish extends JPlugin
 
             foreach ($_SERVER as $key => $value) {
                 if (strpos(strtolower($key), 'x_joomla')) {
-                    $xheader = str_replace('_', '-', str_replace('http_', '', strtolower($key)));
+                    $xheader = str_replace(
+                        '_',
+                        '-',
+                        str_replace('http_', '', strtolower($key))
+                    );
                     JFactory::getApplication()->setHeader($xheader, $value, true);
                 }
             }
@@ -558,10 +647,11 @@ class plgSystemAlligovarnish extends JPlugin
             if ($this->exception_header_key && $this->exception_header_val) {
                 // echo '<!--oi3' . $this->exception_header_key . '--!>';
                 // echo '<!--oi3' . $this->exception_header_key . '--!>';
-                // JFactory::getApplication()->setHeader('x-teste', 'valor-teste', true);
                 JFactory::getApplication()->setHeader(
                     $this->exception_header_key,
-                    $this->exception_header_val, true);
+                    $this->exception_header_val,
+                    true
+                );
             }
             // if ($this->debug_is) {
             // }
@@ -571,7 +661,6 @@ class plgSystemAlligovarnish extends JPlugin
 
         // Deprecated: remove after here
         if ($this->is_site) {
-
             $menu_active = JFactory::getApplication()->getMenu()->getActive();
             $this->itemid = empty($menu_active) || empty($menu_active->id) ? 0 : (int) $menu_active->id;
             $this->varnishtime = $this->_getTimeAsSeconds($this->params->get('varnishtime', ''));
@@ -582,7 +671,6 @@ class plgSystemAlligovarnish extends JPlugin
             $this->debug_is = (bool) $this->params->get('debug', false);
             $this->setCache();
         } else {
-
             // Tip for varnish that we REALLY do not want cache this
             $this->setCacheProxy(null);
         }
