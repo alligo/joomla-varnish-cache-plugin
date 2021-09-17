@@ -1,7 +1,11 @@
 <?php
+
 /**
  * Joomla Varnish plugin
- * php version 5.6
+ *
+ * Code style:
+ * - PHP PSR-12 https://www.php-fig.org/psr/psr-12/
+ * - https://github.com/joomla/joomla-cms/blob/4.0-dev/.php_cs.dist
  *
  * @category  System
  * @package   PlgSystemAlligovarnish
@@ -11,10 +15,11 @@
  * @link      https://github.com/alligo/joomla_plg_system_alligovarnish
  */
 
+// phpcs:disable
+// PSR-1 does not like this side-effect, but Joomla requires this on every
+// PHP file.
 defined('_JEXEC') or die;
-
-// https://www.php-fig.org/psr/psr-12/
-// https://www.php-fig.org/psr/psr-2/
+// phpcs:enable
 
 /**
  * Plugin Alligo Varnish
@@ -26,7 +31,7 @@ defined('_JEXEC') or die;
  * @license   GNU General Public License version 3. See license.txt
  * @link      https://github.com/alligo/joomla_plg_system_alligovarnish
  */
-class PlgSystemAlligovarnish extends JPlugin
+class PlgSystemAlligovarnish extends JPlugin // phpcs:ignore
 {
 
     /**
@@ -34,28 +39,32 @@ class PlgSystemAlligovarnish extends JPlugin
      *
      * @var int
      */
-    const EXCEPT_LOGGED = 1;
+    const EXCEPT_LOGGED = 1; // phpcs:ignore
+    // public const EXCEPT_LOGGED = 1; // PSR-12 on php 7.1+
 
     /**
      * Constant to express that is Joomla component
      *
      * @var int
      */
-    const EXCEPT_COMPONENT = 2;
+    const EXCEPT_COMPONENT = 2; // phpcs:ignore
+    // public const EXCEPT_COMPONENT = 2; // PSR-12 on php 7.1+
 
     /**
      * Constant to express that is URL prefix
      *
      * @var int
      */
-    const EXCEPT_URLPREFIX = 3;
+    const EXCEPT_URLPREFIX = 3; // phpcs:ignore
+    // public const EXCEPT_URLPREFIX = 3; // PSR-12 on php 7.1+
 
     /**
      * Constant to express that is Joomla ItemID (ID of menu)
      *
      * @var int
      */
-    const EXCEPT_ITEMID = 4;
+    const EXCEPT_ITEMID = 4; // phpcs:ignore
+    // public const EXCEPT_ITEMID = 4; // PSR-12 on php 7.1+
 
     /**
      * Default time for browser time, if not specified on $exptbrowser
@@ -157,7 +166,7 @@ class PlgSystemAlligovarnish extends JPlugin
      *
      * @return Integer Time in seconds
      */
-    private function _getTimeAsSeconds($time)
+    private function getTimeAsSeconds($time)
     {
         $seconds = 0;
         if (!empty($time)) {
@@ -204,7 +213,7 @@ class PlgSystemAlligovarnish extends JPlugin
      *
      * @return Array
      */
-    private function _getTimes($string)
+    private function getTimes($string)
     {
         $times = [];
         if (!empty($string)) {
@@ -224,10 +233,10 @@ class PlgSystemAlligovarnish extends JPlugin
                     if (substr($parts[1], 0, 1) === "0") {
                         // Do not cache this
                         $times[(int) $parts[0]] = false;
-                    } else if (!in_array(substr($parts[1], -1), ['s', 'm', 'h', 'd', 'M', 'y'])) {
+                    } elseif (!in_array(substr($parts[1], -1), ['s', 'm', 'h', 'd', 'M', 'y'])) {
                         $this->debug['wrongtime'] = empty($this->debug['wrongtime']) ? $line : $this->debug['wrongtime'] . ',' . $line;
                     } else {
-                        $times[(int) $parts[0]] = $this->_getTimeAsSeconds($parts[1]);
+                        $times[(int) $parts[0]] = $this->getTimeAsSeconds($parts[1]);
                     }
                 }
             }
@@ -241,13 +250,13 @@ class PlgSystemAlligovarnish extends JPlugin
      *
      * @return Int
      */
-    private function _isException()
+    private function isException()
     {
         // TODO: deal with old cookies from logged users
         //       if they are present on a request
         if ((int) $this->params->get('never_logged_enabled') > 0) {
             if (!JFactory::getUser()->guest) {
-                // $this->_isExceptionCustomHTTPHeader();
+                // $this->isExceptionCustomHTTPHeader();
                 return self::EXCEPT_LOGGED;
             }
         }
@@ -256,7 +265,7 @@ class PlgSystemAlligovarnish extends JPlugin
             $raw = $this->params->get('never_option', '');
             $lines = array_filter(explode("\r\n", $raw));
             if (in_array(JFactory::getApplication()->input->get('option'), $lines)) {
-                $this->_isExceptionCustomHTTPHeader(
+                $this->isExceptionCustomHTTPHeader(
                     $this->params->get('never_option_httpheader', '')
                 );
                 return self::EXCEPT_COMPONENT;
@@ -271,7 +280,7 @@ class PlgSystemAlligovarnish extends JPlugin
             foreach ($lines as $key => $value) {
                 if (strlen($value) > 1) { // No '' or '/'
                     if (strpos($cpath, $value) === 0) {
-                        $this->_isExceptionCustomHTTPHeader(
+                        $this->isExceptionCustomHTTPHeader(
                             $this->params->get('never_prefix_httpheader', '')
                         );
                         return self::EXCEPT_URLPREFIX;
@@ -285,7 +294,7 @@ class PlgSystemAlligovarnish extends JPlugin
             // return print_r($lines, true);
             // return JFactory::getApplication()->getMenu()->getActive()->id;
             if (in_array((string) JFactory::getApplication()->getMenu()->getActive()->id, $lines)) {
-                $this->_isExceptionCustomHTTPHeader(
+                $this->isExceptionCustomHTTPHeader(
                     $this->params->get('never_itemid_httpheader', '')
                 );
                 return self::EXCEPT_ITEMID;
@@ -296,15 +305,15 @@ class PlgSystemAlligovarnish extends JPlugin
     }
 
     /**
-     * Extends _isException()
+     * Extends isException()
      *
      * @param String $raw_header Raw header string
      *
      * @return Void
      *
-     * @see _isException()
+     * @see isException()
      */
-    private function _isExceptionCustomHTTPHeader($raw_header)
+    private function isExceptionCustomHTTPHeader($raw_header)
     {
         $parts = explode(': ', (string) $raw_header);
         if (count($parts) == 2) {
@@ -314,27 +323,15 @@ class PlgSystemAlligovarnish extends JPlugin
     }
 
     /**
-     * Extends _isException()
+     * Extends isException()
      *
      * @param String $raw_header Raw header string
      *
      * @return Void
      *
-     * @see _isException()
+     * @see isException()
      */
-    private function _isExceptionCustomCookie($raw_header)
-    {
-        throw new Exception('Not implemented');
-    }
-
-    /**
-     * Extends _isException()
-     *
-     * @return Void
-     *
-     * @see _isException()
-     */
-    private function _setCache()
+    private function isExceptionCustomCookie($raw_header)
     {
         throw new Exception('Not implemented');
     }
@@ -458,6 +455,18 @@ class PlgSystemAlligovarnish extends JPlugin
     }
 
     /**
+     * Extends isException()
+     *
+     * @return Void
+     *
+     * @see isException()
+     */
+    private function setCache2()
+    {
+        throw new Exception('Not implemented');
+    }
+
+    /**
      * Some places of Jooma should never cache
      *
      * @todo Ainda não está funcional da forma como está sendo chamada. Deve
@@ -474,16 +483,16 @@ class PlgSystemAlligovarnish extends JPlugin
         if ($component === 'com_ajax') {
             $this->setCacheProxy(false);
             $reason = 'Ajax Request';
-        } else if ($component === 'com_banners') {
+        } elseif ($component === 'com_banners') {
             $task = JFactory::getApplication()->input->getCmd('task', '');
             if ($task === 'click') {
                 $this->setCacheProxy(false);
                 $reason = 'Ajax Request';
             }
-        } else if (!JFactory::getUser()->guest) {
+        } elseif (!JFactory::getUser()->guest) {
             $this->setCacheProxy(false);
             $reason = 'joomla_logged_in';
-        } else if ($component === 'com_users') {
+        } elseif ($component === 'com_users') {
             $this->setCacheProxy(false);
             $reason = 'Possible login page?';
         }
@@ -589,7 +598,6 @@ class PlgSystemAlligovarnish extends JPlugin
                 JFactory::getDate()->getTimestamp()
             );
             //JFactory::getApplication()->setHeader('Surrogate-Control', 'public, max-age=' . $time, true);
-            //JFactory::getApplication()->setHeader('Surrogate-Control', 'max-age=' . $time . ' + ' . $this->stale_time . ', content="ESI/1.0"', true);
             JFactory::getApplication()->setHeader(
                 'Surrogate-Control',
                 'max-age=' . $time . '+' . $this->stale_time,
@@ -619,7 +627,7 @@ class PlgSystemAlligovarnish extends JPlugin
      */
     public function prepareToCache()
     {
-        $exception = $this->_isException();
+        $exception = $this->isException();
         if ($this->debug_is) {
             // Se o varnish estiver enviando heades iniciadas com X-Joomla,
             // devolver ao cliente final
@@ -663,10 +671,10 @@ class PlgSystemAlligovarnish extends JPlugin
         if ($this->is_site) {
             $menu_active = JFactory::getApplication()->getMenu()->getActive();
             $this->itemid = empty($menu_active) || empty($menu_active->id) ? 0 : (int) $menu_active->id;
-            $this->varnishtime = $this->_getTimeAsSeconds($this->params->get('varnishtime', ''));
-            $this->browsertime = $this->_getTimeAsSeconds($this->params->get('browsertime', ''));
-            $this->exptproxy = $this->_getTimes($this->params->get('exptproxy', ''));
-            $this->exptbrowser = $this->_getTimes($this->params->get('exptbrowser', ''));
+            $this->varnishtime = $this->getTimeAsSeconds($this->params->get('varnishtime', ''));
+            $this->browsertime = $this->getTimeAsSeconds($this->params->get('browsertime', ''));
+            $this->exptproxy = $this->getTimes($this->params->get('exptproxy', ''));
+            $this->exptbrowser = $this->getTimes($this->params->get('exptbrowser', ''));
             $this->extrainfo = (bool) $this->params->get('extrainfo', false);
             $this->debug_is = (bool) $this->params->get('debug', false);
             $this->setCache();
