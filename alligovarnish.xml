@@ -365,20 +365,6 @@
           description="Cache-control: max-age=DELTA (default)"
         />
 
-        <!--
-        <field
-          name="max-age_itemid"
-          showon="max-age_enabled:1"
-          type="textarea"
-          default=""
-          hint="[MenuID:CacheTime]\n101|120s\n102|2m\n103|3h"
-          label="max-age (Custom, Menu ID)"
-          description=""
-          rows="10"
-          cols="5"
-        />
-        -->
-
         <field
           name="max-age_custom"
           showon="max-age_enabled:2,4"
@@ -433,7 +419,8 @@
 
         <option value="0">JNO</option>
         <option value="1">JYES</option>
-        <option value="2">Custom</option>
+        <option value="2">Default + Custom</option>
+        <option value="4">Custom only</option>
         </field>
 
         <field
@@ -447,27 +434,14 @@
         />
 
         <field
-          name="s-maxage_urllist"
-          showon="s-maxage_enabled:2"
+          name="s-maxage_custom"
+          showon="s-maxage_enabled:2,4"
           type="textarea"
           default=""
-          hint="[/page:CacheTime]\n/hotsite-page|30s\n/archive-page|4h"
-          label="max-age (Custom, Exact URL)"
-          description="Apply customization by list of URLs. Use | as separator"
-          rows="5"
-          cols="5"
-          class="input-xxlarge"
-        />
-
-        <field
-          name="s-maxage_urlprefix"
-          showon="s-maxage_enabled:2"
-          type="textarea"
-          default=""
-          hint="[/pages/prefix/:CacheTime]\n/hotsite-pages/|30s\n/archived-old-pages/|4h"
-          label="s-maxage (Custom, URL prefix)"
-          description="Apply customization by list of URLs. Use | as separator"
-          rows="5"
+          hint="# {Rule} | {Variable} | {Time}\nurl | /home-url | 30s # URL\nurlprefix | /old/archive-page | 4h # URL, prefix\nmenu | 101 | 30s # Menu ID\ncomponent | com_weblinks | 0s # Joomla component\nlogged | _ | 0s # Logged user (advanced option)"
+          label="s-maxage (Custom)"
+          description="Apply customizations by [Type | Variable | custom-time], one per line. # can be used as comment"
+          rows="8"
           cols="5"
           class="input-xxlarge"
         />
@@ -485,7 +459,8 @@
         >
           <option value="0">JNO</option>
           <option value="1">JYES</option>
-          <option value="2">Custom</option>
+          <option value="2">Default + Custom</option>
+          <option value="4">Custom only</option>
         </field>
 
         <field
@@ -499,36 +474,60 @@
         />
 
         <field
-          name="stale-while-revalidate_urllist"
-          showon="stale-while-revalidate_enabled:2"
+          name="stale-while-revalidate_custom"
+          showon="stale-while-revalidate_enabled:2,4"
           type="textarea"
           default=""
-          hint="[/page:CacheTime]\n/hotsite-page|30s\n/archive-page|4h"
-          label="max-age (Custom, Exact URL)"
-          description="Apply customization by list of URLs. Use | as separator"
-          rows="5"
-          cols="5"
-          class="input-xxlarge"
-        />
-
-        <field
-          name="stale-while-revalidate_urlprefix"
-          showon="stale-while-revalidate_enabled:2"
-          type="textarea"
-          default=""
-          hint="[/pages/prefix/:CacheTime]\n/hotsite-pages/|30s\n/archived-old-pages/| 4h\n component | com_weblinks | 0s # Joomla component"
-          label="stale-while-revalidate (Custom, URL prefix)"
-          description="Apply customization by list of URLs. Use | as separator"
-          rows="5"
+          hint="# {Rule} | {Variable} | {Time}\nurl | /home-url | 30s # URL\nurlprefix | /old/archive-page | 4h # URL, prefix\nmenu | 101 | 30s # Menu ID\ncomponent | com_weblinks | 0s # Joomla component\nlogged | _ | 0s # Logged user (advanced option)"
+          label="stale-while-revalidate (Custom)"
+          description="Apply customizations by [Type | Variable | custom-time], one per line. # can be used as comment"
+          rows="8"
           cols="5"
           class="input-xxlarge"
         />
 
         <field type="spacer" name="spacer-g" hr="true" />
 
-        <!--
-          TODO: stale-if-error=TIME
-        -->
+
+        <field
+          name="stale-if-error_enabled"
+          type="list"
+          class=""
+          default="1"
+          filter="integer"
+          label="Cache-Control stale-if-error enabled?"
+          description=""
+        >
+          <option value="0">JNO</option>
+          <option value="1">JYES</option>
+          <option value="2">Default + Custom</option>
+          <option value="4">Custom only</option>
+        </field>
+
+        <field
+          name="stale-if-error_default"
+          showon="stale-if-error_enabled:1,2"
+          type="text"
+          default="120s"
+          hint="120s"
+          label="stale-if-error (default)"
+          description="Cache-control: stale-if-error=DELTA (default)"
+        />
+
+        <field
+          name="stale-if-error_custom"
+          showon="stale-if-error_enabled:2,4"
+          type="textarea"
+          default=""
+          hint="# {Rule} | {Variable} | {Time}\nurl | /home-url | 30s # URL\nurlprefix | /old/archive-page | 4h # URL, prefix\nmenu | 101 | 30s # Menu ID\ncomponent | com_weblinks | 0s # Joomla component\nlogged | _ | 0s # Logged user (advanced option)"
+          label="stale-if-error (Custom)"
+          description="Apply customizations by [Type | Variable | custom-time], one per line. # can be used as comment"
+          rows="8"
+          cols="5"
+          class="input-xxlarge"
+        />
+
+        <field type="spacer" name="spacer-h" hr="true" />
 
       </fieldset>
 

@@ -214,7 +214,10 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
     {
         $times = [];
         if (!empty($string)) {
-            $lines = explode("\r\n", $string);
+            // Normalize line endings.
+            $string = str_replace(array("\r\n", "\r"), "\n", $string);
+            // Split them.
+            $lines = explode("\n", $string);
 
             foreach ($lines as $line) {
                 // TODO: remove separator :
@@ -248,31 +251,32 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
      *
      * Return null if invalid / malformated and False if is a comment rule.
      *
-     * @param  String  $rule_raw  A full raw rule to evaluate
+     * @param  String  $rule_line_raw  A full raw rule to evaluate
      *
      * @return  Array
      */
-    protected function getRule($rule_raw)
+    protected function getRule($rule_line_raw)
     {
         $result = [null, null, -1];
         $accepted = ['url', 'urlprefix', 'component', 'menu', 'logged'];
-        if (isset($rule) && is_string($rule)) {
+        if (isset($rule_line_raw) && is_string($rule_line_raw)) {
             // Start with comment
-            if ($rule[0] === "#" or substr($rule, 0, 2) === "//") {
+            if ($rule_line_raw[0] === "#" or substr($rule_line_raw, 0, 2) === "//") {
                 return false;
             }
 
             // Have comment on some part of the line
-            if (strpos($rule_raw, "#") !== false) {
-                $rule_raw = substr($rule_raw, 0, strpos($rule_raw, "#"));
+            if (strpos($rule_line_raw, "#") !== false) {
+                $rule_line_raw = substr($rule_line_raw, 0, strpos($rule_line_raw, "#"));
             }
 
-            if (strpos($rule_raw, "//") !== false) {
-                $rule_raw = substr($rule_raw, 0, strpos($rule_raw, "//"));
+            if (strpos($rule_line_raw, "//") !== false) {
+                $rule_line_raw = substr($rule_line_raw, 0, strpos($rule_line_raw, "//"));
             }
 
-            $parts = explode("|", $rule_raw);
+            $parts = explode("|", $rule_line_raw);
             if (count($parts) !== 3 or in_array($parts[0], $accepted)) {
+                echo "erro";
                 return null;
             }
 
@@ -411,6 +415,52 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
         }
 
         return null;
+    }
+
+    /**
+     * Check for a raw string value (id est, one input with custom several
+     * rules), if any rule matches, and if yes, return the FIRST match.
+     *
+     * The result will be an Array with [TimeInSeconds, ParsedRule]. Or false
+     * if none matches.
+     *
+     * @param  String  $rule      A rule to evaluate
+     * @param  String  $variable  Variable for the rule
+     *
+     * @return  Array
+     */
+    protected function isRuleAny($rule_raw)
+    {
+        if (!empty($rule_raw)) {
+            // Normalize line endings.
+            $rule_raw = str_replace(array("\r\n", "\r"), "\n", $rule_raw);
+            // Split them.
+            $lines = explode("\n", $rule_raw);
+
+            // print($rule_raw); die;
+
+            foreach ($lines as $line) {
+                $rule_now = $this->getRule($line);
+                // print_r($line);
+                // echo "\n";
+                // print_r($rule_now);
+                // echo "\n";
+                if (!empty($rule_now)) {
+                    $rule_time = $this->isRule($rule_now[0], $rule_now[1], $rule_now[2]);
+                    // echo "ryletime" . $rule_time . "\n";
+                    if ($this->isRule($rule_now[0], $rule_now[1])) {
+                        return [$rule_now[2], $rule_now];
+                    }
+                    // if (is_integer($rule_time)) {
+                    //     return $rule_time;
+                    // }
+                }
+            }
+            // echo "\n\n";
+            // print($rule_raw); die;
+        }
+
+        return false;
     }
 
     /**
@@ -590,6 +640,8 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
     /**
      * @param  Int  $maxage  max-age
      * @param  Int  $smaxage s-maxage
+     * @param  Int  $stale_while_revalidate stale-while-revalidate
+     * @param  Int  $stale_if_error  stale-if-error
      * @param  Bool  $extrainfo If must send extra info, prefixed with X-.
      *                          Can be used if other extensions are overriding
      *                          the custom headers.
@@ -600,6 +652,7 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
         $maxage = false,
         $smaxage = false,
         $stale_while_revalidate = false,
+        $stale_if_error = false,
         $extrainfo = false
     ) {
         $this->run += 1;
@@ -630,12 +683,13 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
             }
         }
         if (!empty($smaxage)) {
-            // Default $cachecontrolstr
             $cachecontrolstr = $cachecontrolstr . ', s-maxage=' . (int) $smaxage;
         }
         if (!empty($stale_while_revalidate)) {
-            // Default $cachecontrolstr
             $cachecontrolstr = $cachecontrolstr . ', stale-while-revalidate=' . (int) $stale_while_revalidate;
+        }
+        if (!empty($stale_if_error)) {
+            $cachecontrolstr = $cachecontrolstr . ', stale-if-error=' . (int) $stale_if_error;
         }
 
         // echo $cachecontrolstr; die;
@@ -819,34 +873,16 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
         }
 
         // Typical use
-        $maxage = null;
-        $smaxage = null;
-        $stale_while_revalidate = null;
-        if ((int) $this->params->get('max-age_enabled') > 0) {
-            if (in_array($this->params->get('max-age_enabled'), ["1", "2"])) {
-                $maxage = $this->getTimeAsSeconds($this->params->get('max-age_default'));
-            }
-            // $maxage_default =
-        }
-        if ((int) $this->params->get('s-maxage_enabled') > 0) {
-            if (in_array($this->params->get('s-maxage_enabled'), ["1", "2"])) {
-                $smaxage = $this->getTimeAsSeconds($this->params->get('s-maxage_default'));
-            }
-            // $maxage_default =
-        }
-        if ((int) $this->params->get('stale-while-revalidate_enabled') > 0) {
-            if (in_array($this->params->get('stale-while-revalidate_enabled'), ["1", "2"])) {
-                $stale_while_revalidate = $this->getTimeAsSeconds($this->params->get('stale-while-revalidate_default'));
-            }
-            // $maxage_default =
-        }
-
-        // $stale_while_revalidate = 123;
+        $maxage = $this->prepareToCacheGetTime('max-age');
+        $smaxage = $this->prepareToCacheGetTime('s-maxage');
+        $stale_while_revalidate = $this->prepareToCacheGetTime('stale-while-revalidate');
+        $stale_if_error = $this->prepareToCacheGetTime('stale-if-error');
 
         $this->setCacheHeaders(
             $maxage,
             $smaxage,
             $stale_while_revalidate,
+            $stale_if_error,
             (bool) $this->params->get('extrainfo')
         );
 
@@ -871,5 +907,26 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
         }
         */
         // echo "<!-- " . print_r($this->params, true) . '--!>';
+    }
+
+    private function prepareToCacheGetTime($param_token)
+    {
+        $result = null;
+        if ((int) $this->params->get($param_token . '_enabled') > 0) {
+            if (in_array($this->params->get($param_token . '_enabled'), ["1", "2"])) {
+                $result = $this->getTimeAsSeconds($this->params->get($param_token . '_default'));
+            }
+            // $result = ...(the extra rules here...)
+
+            $custom_time_rule = $this->isRuleAny($this->params->get($param_token . '_custom'));
+            // $custom = 3;
+            JFactory::getApplication()->setHeader('x-debug-time-default-' . $param_token, $result, false);
+            if (!empty($custom_time_rule) && is_integer($custom_time_rule[0])) {
+                $result = $custom_time_rule[0];
+                // $custom_time_rule[1]; Reason here.
+                JFactory::getApplication()->setHeader('x-debug-time-custom-' . $param_token, $result, false);
+            }
+        }
+        return $result;
     }
 }

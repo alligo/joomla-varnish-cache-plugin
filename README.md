@@ -147,6 +147,10 @@ Google Analytics) would invalidate this.
 - [Google Analytics Event Tracking - Alligo Helper, JS library](https://github.com/alligo/google-analytics-event-tracking)
 
 
+<!--
+- https://serverfault.com/questions/1055637/varnish-6-x-stale-if-error-implementation/1055651
+-->
+
 ## License
 
 [![Public Domain Dedication](https://licensebuttons.net/p/zero/1.0/88x31.png)](UNLICENSE)
