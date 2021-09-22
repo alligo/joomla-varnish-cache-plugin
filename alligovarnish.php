@@ -135,6 +135,8 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
      */
     protected $stale_time = 30;
 
+    protected $run = 0;
+
     // /**
     //  * Constructor.
     //  *
@@ -452,7 +454,7 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
      */
     public function onAfterRender()
     {
-        $this->is_site && $this->prepareToCache();
+        // $this->is_site && $this->prepareToCache();  // testing disabled
     }
 
     /**
@@ -463,7 +465,8 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
      */
     public function onBeforeCompileHead()
     {
-        $this->is_site && $this->prepareToCache();
+        // $this->is_site && $this->prepareToCache(); // testing disabled
+
         // @todo Feature: maybe implement a way to set robots "nofollow" if site
         // is not behind varnish cache
         //if (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] !== 80) {
@@ -484,8 +487,8 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
      */
     public function onBeforeRender()
     {
-        // Esse talvez não precise
-        $this->is_site && $this->prepareToCache();
+        // Not necessary
+        // $this->is_site && $this->prepareToCache();
     }
 
     /**
@@ -593,9 +596,19 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
      *
      * @return  Void
      */
-    protected function setCacheHeaders($maxage = false, $smaxage = false, $extrainfo = false)
-    {
-        echo "<!-- maxage" . $maxage . " --!>";
+    protected function setCacheHeaders(
+        $maxage = false,
+        $smaxage = false,
+        $stale_while_revalidate = false,
+        $extrainfo = false
+    ) {
+        $this->run += 1;
+        $extrainfo = true;
+        // echo "<!-- maxage" . $maxage . " --!>";
+        // JFactory::getApplication()->setHeader('x-teste3', 'valor-teste2', true);
+        JFactory::getApplication()->setHeader('x-debug-run-' . $this->run, $maxage . '-' . $smaxage);
+
+        // return '';
         $cachecontrolstr = 'no-cache, no-store, must-revalidate';
         if ($maxage === false or $maxage === 0) {
             // Default $cachecontrolstr
@@ -616,11 +629,18 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
                 JFactory::getApplication()->setHeader('X-Pragma', 'cache', true);
             }
         }
-        if (!empty($smaxage) and $smaxage > 0) {
+        if (!empty($smaxage)) {
             // Default $cachecontrolstr
-            $cachecontrolstr .= $cachecontrolstr . ', s-maxage=' . $smaxage;
+            $cachecontrolstr = $cachecontrolstr . ', s-maxage=' . (int) $smaxage;
+        }
+        if (!empty($stale_while_revalidate)) {
+            // Default $cachecontrolstr
+            $cachecontrolstr = $cachecontrolstr . ', stale-while-revalidate=' . (int) $stale_while_revalidate;
         }
 
+        // echo $cachecontrolstr; die;
+
+        // JFactory::getApplication()->setHeader('Cache-Control', $cachecontrolstr, true);
         JFactory::getApplication()->setHeader('Cache-Control', $cachecontrolstr, true);
         if ($extrainfo) {
             JFactory::getApplication()->setHeader('X-Cache-Control', $cachecontrolstr, true);
@@ -629,6 +649,8 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
 
     /**
      * Set headers specific for the browser cache
+     *
+     * @deprecated
      *
      * @param Integer $time Time in seconds
      *
@@ -698,6 +720,8 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
     /**
      * Set headers specific for the proxy cache
      *
+     * @deprecated
+     *
      * @param Integer $time Time in seconds
      *
      * @return Void
@@ -745,7 +769,15 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
      */
     public function prepareToCache()
     {
+        // NOTE: when doing debug, remember that $app->setHeader() will
+        //       NOT send any new header if any echo / print_r was previously
+        //       used. This is not a bug, is how low level HTTP requests
+        //       should operate (aka only send headers before echoing
+        //       real content)
 
+        // JFactory::getApplication()->setHeader('x-teste4', 'valor-teste2', true);
+        // JFactory::getApplication()->setHeader('X-Alligo-ProxyCache', 'teeee');
+        // JFactory::getApplication()->setHeader('X-Alligo-ProxyCache2', 'teeee', true);
         // echo "<!-- " . print_r($this->params, true) . '--!>';
 
         // If debug is enabled, this code section will look for "client side"
@@ -789,6 +821,7 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
         // Typical use
         $maxage = null;
         $smaxage = null;
+        $stale_while_revalidate = null;
         if ((int) $this->params->get('max-age_enabled') > 0) {
             if (in_array($this->params->get('max-age_enabled'), ["1", "2"])) {
                 $maxage = $this->getTimeAsSeconds($this->params->get('max-age_default'));
@@ -797,12 +830,25 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
         }
         if ((int) $this->params->get('s-maxage_enabled') > 0) {
             if (in_array($this->params->get('s-maxage_enabled'), ["1", "2"])) {
-                $maxage = $this->getTimeAsSeconds($this->params->get('s-maxage_default'));
+                $smaxage = $this->getTimeAsSeconds($this->params->get('s-maxage_default'));
+            }
+            // $maxage_default =
+        }
+        if ((int) $this->params->get('stale-while-revalidate_enabled') > 0) {
+            if (in_array($this->params->get('stale-while-revalidate_enabled'), ["1", "2"])) {
+                $stale_while_revalidate = $this->getTimeAsSeconds($this->params->get('stale-while-revalidate_default'));
             }
             // $maxage_default =
         }
 
-        $this->setCacheHeaders($maxage, $smaxage, (bool) $this->params->get('extrainfo'));
+        // $stale_while_revalidate = 123;
+
+        $this->setCacheHeaders(
+            $maxage,
+            $smaxage,
+            $stale_while_revalidate,
+            (bool) $this->params->get('extrainfo')
+        );
 
         // Deprecated: remove after here
         /*
@@ -824,5 +870,6 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
             JFactory::getApplication()->setHeader('X-Alligo-Debug', json_encode($this->debug), true);
         }
         */
+        // echo "<!-- " . print_r($this->params, true) . '--!>';
     }
 }
