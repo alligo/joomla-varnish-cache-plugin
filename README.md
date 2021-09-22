@@ -1,26 +1,76 @@
-# Alligo "RFC 7234" for Joomla CMS (aka Varnish-Cache for Joomla! plugin)
+# Alligo "RFC 7234" for Joomla CMS (aka Varnish-Cache plugin for Joomla!)
 **A [Joomla CMS](https://www.joomla.org/) plugin for high traffic
 (or SEO concerned) websites compatible with
 [RFC 7234](https://datatracker.ietf.org/doc/html/rfc7234>) optimized for
-fault-tolerant and very fast responses while requiring 4-10
-times cheaper hardware.**
+fault-tolerant and very fast responses (from > 1s to < 0.05s) while
+requiring 4-10 times cheaper hardware.**
 
-## Quickstart: How to install and make a site faster and reliable
+---
 
-### Joomla plugin
-1. Download a version
+<!-- TOC depthFrom:2 -->
+
+- [Quickstart](#quickstart)
+    - [1. Website configuration](#1-website-configuration)
+        - [General Joomla optimization (default with Joomla, no extensions need it)](#general-joomla-optimization-default-with-joomla-no-extensions-need-it)
+        - [Joomla plugin installation (this plugin)](#joomla-plugin-installation-this-plugin)
+    - [2. Caching server configuration](#2-caching-server-configuration)
+        - [A. Varnish](#a-varnish)
+        - [B. NGinx (instead of Varnish)](#b-nginx-instead-of-varnish)
+        - [C. Cloudflare, Fastly, etc (3rd party providers)](#c-cloudflare-fastly-etc-3rd-party-providers)
+    - [Specifications](#specifications)
+    - [Other links to see](#other-links-to-see)
+- [License](#license)
+
+<!-- /TOC -->
+
+---
+
+## Quickstart
+
+Since the idea of making the site faster is more than install a plugin, this
+section give a quickstart on the topic.
+
+### 1. Website configuration
+
+<!--
+You must do **both** steps, from know how Joomla, without this plugin, works,
+then install this plugin.
+
+#### General Joomla optimization (default with Joomla, no extensions need it)
+While this plugin is a replacement for native Joomla system plugin cache (the
+one stored at `plugins/system/cache`, that is recommended be disabled with
+using this one). The defaul
+-->
+
+#### Joomla plugin installation (this plugin)
+1. **Download a version**
     1. For example, the latest version from <https://github.com/alligo/joomla_plg_system_alligovarnish/archive/refs/heads/master.zip>.
-2. Upload to your Joomla test site, like any other Joomla plugin.
+2. **Upload to your Joomla test site, like any other Joomla plugin.**
     1. It can be a test version of the real site. A localhost installation
-       could be used for basic testing, but full implementation with Varnish
-       would require that even your test site is served by Varnish
-3. Enable the plugin.
-4. Customize each functionality of the plugin
+       could be used for basic testing, **but full implementation with Varnish
+       would require that even your test site is served by Varnish.**
+3. **Enable the plugin and check potential incompatibilities with other plugins.**
+    1. The Joomla plugin "System - Cache" (on disk: `plugins/system/cache`)
+       while is recommended to be used for big sites without Varnish-Cache
+       and a a lot of free disk space, may be not incompatible with this
+       plugin, but may not increase performance. Do your tests.
+    2. Note: the cache configurations for Joomla on
+       `Administrator Panel > System > Cache configurations` still worth to
+       NOT disable. They are important for reusable parts of the site (like
+       cache at module level).
+       Reason: while this plugin works as full page cache (at
+       server level, on Varnish or equivalent), the cache done by Joomla for
+       modules is important to keep it enabled, even if for short time!
+           1. Example: if a slow efficient module (like one that request
+              weather for a city, or currency quotations) is slow (as in 0.3s)
+              and is loaded on all pages of your site, Varnish will be 0.3s
+              faster for each first page it caches.
+4. **Customize each functionality of the plugin**
     1. This plugin requires configuration and testing based on how you're
        caching servers operate. This is why it has so many options and is
-       inviable create a generic version of varnish default.vcl for everyone.
+       inviable create a generic version of Varnish `default.vcl` for everyone.
 
-### The caching server
+### 2. Caching server configuration
 Since joomla_plg_system_alligovarnish mostly give hints of how content should
 be cached, **it requires some frontend caching server** even to maximize use
 on Browser caching to remove the cookies when the user is not authenticated.
@@ -58,15 +108,17 @@ Yes, is possible, but not as efficient. One main argument to not recommend this
 if is viable use Varnish is that the end result will be harder to debug, in
 special when cache invalidation is necessary.
 
-#### C. Cloudflare, Fastly, etc
+#### C. Cloudflare, Fastly, etc (3rd party providers)
 The joomla_plg_system_alligovarnish is tested against customized Varnish
 servers, but since it abstract
 [RFC 7234](https://datatracker.ietf.org/doc/html/rfc7234), and try to be as
 flexible as possible, it is likely to make easier to use other providers.
 
 Sadly, some, like Cloudflare, will not provide caching for Joomla generated
-content (the HTML versions) on the free option like is possible to do with
-custom Varnish server.
+content (the HTML versions, not the images) on the free option like is
+possible to do with custom Varnish server. **In other words:
+
+_(...TODO explain more...)_
 
 ---
 
@@ -95,7 +147,7 @@ Google Analytics) would invalidate this.
 - [Google Analytics Event Tracking - Alligo Helper, JS library](https://github.com/alligo/google-analytics-event-tracking)
 
 
-# License
+## License
 
 [![Public Domain Dedication](https://licensebuttons.net/p/zero/1.0/88x31.png)](UNLICENSE)
 
