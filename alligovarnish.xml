@@ -351,7 +351,8 @@
         >
           <option value="0">JNO</option>
           <option value="1">JYES</option>
-          <option value="2">Custom</option>
+          <option value="2">Default + Custom</option>
+          <option value="4">Custom only</option>
         </field>
 
         <field
@@ -379,6 +380,19 @@
         -->
 
         <field
+          name="max-age_custom"
+          showon="max-age_enabled:2,4"
+          type="textarea"
+          default=""
+          hint="# {Rule} | {Variable} | {Time}\nurl | /home-url | 30s # URL\nurlprefix | /old/archive-page | 4h # URL, prefix\nmenu | 101 | 30s # Menu ID\ncomponent | com_weblinks | 0s # Joomla component\nlogged | _ | 0s # Logged user (advanced option)"
+          label="max-age (Custom)"
+          description="Apply customizations by [Type | Variable | custom-time], one per line. # can be used as comment"
+          rows="8"
+          cols="5"
+          class="input-xxlarge"
+        />
+        <!--
+        <field
           name="max-age_urllist"
           showon="max-age_enabled:2"
           type="textarea"
@@ -403,6 +417,7 @@
           cols="5"
           class="input-xxlarge"
         />
+        -->
 
         <field type="spacer" name="spacer-e" hr="true" />
 
@@ -501,7 +516,7 @@
           showon="stale-while-revalidate_enabled:2"
           type="textarea"
           default=""
-          hint="[/pages/prefix/:CacheTime]\n/hotsite-pages/|30s\n/archived-old-pages/|4h"
+          hint="[/pages/prefix/:CacheTime]\n/hotsite-pages/|30s\n/archived-old-pages/| 4h\n component | com_weblinks | 0s # Joomla component"
           label="stale-while-revalidate (Custom, URL prefix)"
           description="Apply customization by list of URLs. Use | as separator"
           rows="5"

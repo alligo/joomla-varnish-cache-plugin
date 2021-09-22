@@ -244,23 +244,39 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
      * Check if is one individual string is a rule, and already break it value
      * in some parts
      *
-     * @param  String  $rule  A rule to evaluate
+     * Return null if invalid / malformated and False if is a comment rule.
+     *
+     * @param  String  $rule_raw  A full raw rule to evaluate
      *
      * @return  Array
      */
-    protected function getRule($rule)
+    protected function getRule($rule_raw)
     {
         $result = [null, null, -1];
-        $accepted = ['url', 'urlprefix', 'component'];
+        $accepted = ['url', 'urlprefix', 'component', 'menu', 'logged'];
         if (isset($rule) && is_string($rule)) {
-            $parts = explode("|", $rule);
+            // Start with comment
+            if ($rule[0] === "#" or substr($rule, 0, 2) === "//") {
+                return false;
+            }
+
+            // Have comment on some part of the line
+            if (strpos($rule_raw, "#") !== false) {
+                $rule_raw = substr($rule_raw, 0, strpos($rule_raw, "#"));
+            }
+
+            if (strpos($rule_raw, "//") !== false) {
+                $rule_raw = substr($rule_raw, 0, strpos($rule_raw, "//"));
+            }
+
+            $parts = explode("|", $rule_raw);
             if (count($parts) !== 3 or in_array($parts[0], $accepted)) {
                 return null;
             }
 
-            $result[0] = $parts[0];
-            $result[1] = $parts[1];
-            $result[2] = $this->getTimeAsSeconds($parts[2]);
+            $result[0] = trim($parts[0]);
+            $result[1] = trim($parts[1]);
+            $result[2] = $this->getTimeAsSeconds(trim($parts[2]));
             return $result;
         }
         return null;
@@ -355,6 +371,44 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
     private function isExceptionCustomCookie($raw_header)
     {
         throw new Exception('Not implemented');
+    }
+
+    /**
+     * Check if a rule and optionaly a variable match current state.
+     *
+     * @param  String  $rule      A rule to evaluate
+     * @param  String  $variable  Variable for the rule
+     *
+     * @return  Bool
+     */
+    protected function isRule($rule, $variable = null)
+    {
+        if ($rule == 'component') {
+            $jos_option = JFactory::getApplication()->input->get('option');
+            return $jos_option === $variable;
+        }
+
+        if ($rule == 'logged') {
+            return !JFactory::getUser()->guest;
+        }
+
+        if ($rule == 'menu') {
+            $menu = JFactory::getApplication()->getMenu()->getActive()->id;
+            return ((string) $variable === (string) $variable);
+        }
+
+        $uri = \Joomla\CMS\Uri\Uri::getInstance();
+        $cpath = str_replace($uri->base(false), '/', JURI::current());
+
+        if ($rule == 'url') {
+            return $variable === $cpath;
+        }
+
+        if ($rule == 'urlprefix') {
+            return (strpos($variable, $cpath) === 0);
+        }
+
+        return null;
     }
 
     /**
