@@ -585,6 +585,49 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
     }
 
     /**
+     * @param  Int  $maxage  max-age
+     * @param  Int  $smaxage s-maxage
+     * @param  Bool  $extrainfo If must send extra info, prefixed with X-.
+     *                          Can be used if other extensions are overriding
+     *                          the custom headers.
+     *
+     * @return  Void
+     */
+    protected function setCacheHeaders($maxage = false, $smaxage = false, $extrainfo = false)
+    {
+        echo "<!-- maxage" . $maxage . " --!>";
+        $cachecontrolstr = 'no-cache, no-store, must-revalidate';
+        if ($maxage === false or $maxage === 0) {
+            // Default $cachecontrolstr
+            JFactory::getApplication()->setHeader('Pragma', 'no-cache', true);
+            JFactory::getApplication()->setHeader('Expires', '0', true);
+        } else {
+            $epoch = strtotime('+' . $maxage . 's', JFactory::getDate()->getTimestamp());
+            JFactory::getApplication()->setHeader('Expires', date('D, j M Y H:i:s T', $epoch), true);
+            if ($extrainfo) {
+                JFactory::getApplication()->setHeader('X-Expires', date('D, j M Y H:i:s T', $epoch), true);
+            }
+        }
+        if ($maxage > 0) {
+            // Default $cachecontrolstr
+            $cachecontrolstr = 'public, max-age=' . $maxage;
+            JFactory::getApplication()->setHeader('Pragma', 'cache', true);
+            if ($extrainfo) {
+                JFactory::getApplication()->setHeader('X-Pragma', 'cache', true);
+            }
+        }
+        if (!empty($smaxage) and $smaxage > 0) {
+            // Default $cachecontrolstr
+            $cachecontrolstr .= $cachecontrolstr . ', s-maxage=' . $smaxage;
+        }
+
+        JFactory::getApplication()->setHeader('Cache-Control', $cachecontrolstr, true);
+        if ($extrainfo) {
+            JFactory::getApplication()->setHeader('X-Cache-Control', $cachecontrolstr, true);
+        }
+    }
+
+    /**
      * Set headers specific for the browser cache
      *
      * @param Integer $time Time in seconds
@@ -702,13 +745,15 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
      */
     public function prepareToCache()
     {
-        $exception = $this->isException();
-        if ($this->debug_is) {
-            // Se o varnish estiver enviando heades iniciadas com X-Joomla,
-            // devolver ao cliente final
 
-            // echo '<!--' . $exception . '--!>';
+        // echo "<!-- " . print_r($this->params, true) . '--!>';
 
+        // If debug is enabled, this code section will look for "client side"
+        // headers starting with "x-joomla" and, if they exist, will print
+        // it back as if was created by this site.
+        // The only reason to use this is advanced debugging (like echoing
+        // back variables from Varnish proxy cache)
+        if ($this->params->get('debug', "0") === "1") {
             foreach ($_SERVER as $key => $value) {
                 if (strpos(strtolower($key), 'x_joomla')) {
                     $xheader = str_replace(
@@ -721,15 +766,14 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
             }
         }
 
-        // JFactory::getApplication()->setHeader('x-teste', 'valor-teste', true);
-
-        // echo '<!--' . $exception . '--!>';
-        // var_dump($exception,$exception > 0);
+        // Early test if this page is a caching exception to abort earlier.
+        $exception = $this->isException();
         if ($exception > 0) {
-            JFactory::getApplication()->setHeader('x-teste2', 'valor-teste2', true);
+            if ($this->params->get('debug', "0") === "1") {
+                JFactory::getApplication()->setHeader('x-cache-debug-exception', (string) $exception, true);
+            }
+            // JFactory::getApplication()->setHeader('x-teste2', 'valor-teste2', true);
             if ($this->exception_header_key && $this->exception_header_val) {
-                // echo '<!--oi3' . $this->exception_header_key . '--!>';
-                // echo '<!--oi3' . $this->exception_header_key . '--!>';
                 JFactory::getApplication()->setHeader(
                     $this->exception_header_key,
                     $this->exception_header_val,
@@ -739,10 +783,29 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
             // if ($this->debug_is) {
             // }
             // echo '<!--' . $exception . '--!>';
-            // return null;
+            return null;
         }
 
+        // Typical use
+        $maxage = null;
+        $smaxage = null;
+        if ((int) $this->params->get('max-age_enabled') > 0) {
+            if (in_array($this->params->get('max-age_enabled'), ["1", "2"])) {
+                $maxage = $this->getTimeAsSeconds($this->params->get('max-age_default'));
+            }
+            // $maxage_default =
+        }
+        if ((int) $this->params->get('s-maxage_enabled') > 0) {
+            if (in_array($this->params->get('s-maxage_enabled'), ["1", "2"])) {
+                $maxage = $this->getTimeAsSeconds($this->params->get('s-maxage_default'));
+            }
+            // $maxage_default =
+        }
+
+        $this->setCacheHeaders($maxage, $smaxage, (bool) $this->params->get('extrainfo'));
+
         // Deprecated: remove after here
+        /*
         if ($this->is_site) {
             $menu_active = JFactory::getApplication()->getMenu()->getActive();
             $this->itemid = empty($menu_active) || empty($menu_active->id) ? 0 : (int) $menu_active->id;
@@ -760,5 +823,6 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
         if ($this->debug_is && count($this->debug)) {
             JFactory::getApplication()->setHeader('X-Alligo-Debug', json_encode($this->debug), true);
         }
+        */
     }
 }
