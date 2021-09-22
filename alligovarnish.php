@@ -19,40 +19,47 @@
 defined('_JEXEC') or die;
 // phpcs:enable
 
-
-class PlgSystemAlligovarnish extends JPlugin // phpcs:ignore
+class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
 {
     /**
      * Constant to express that is logged user
      *
      * @var int
      */
-    const EXCEPT_LOGGED = 1; // phpcs:ignore
-    // public const EXCEPT_LOGGED = 1; // PSR-12 on php 7.1+
+    const RULE_LOGGED = 1; // phpcs:ignore
+    // public const RULE_LOGGED = 1; // PSR-12 on php 7.1+
 
     /**
      * Constant to express that is Joomla component
      *
      * @var int
      */
-    const EXCEPT_COMPONENT = 2; // phpcs:ignore
-    // public const EXCEPT_COMPONENT = 2; // PSR-12 on php 7.1+
+    const RULE_COMPONENT = 2; // phpcs:ignore
+    // public const RULE_COMPONENT = 2; // PSR-12 on php 7.1+
 
     /**
      * Constant to express that is URL prefix
      *
      * @var int
      */
-    const EXCEPT_URLPREFIX = 3; // phpcs:ignore
-    // public const EXCEPT_URLPREFIX = 3; // PSR-12 on php 7.1+
+    const RULE_URLPREFIX = 3; // phpcs:ignore
+    // public const RULE_URLPREFIX = 3; // PSR-12 on php 7.1+
+
+    /**
+     * Constant to express that is URL prefix
+     *
+     * @var int
+     */
+    const RULE_URL = 4; // phpcs:ignore
+    // public const RULE_URLPREFIX = 3; // PSR-12 on php 7.1+
 
     /**
      * Constant to express that is Joomla ItemID (ID of menu)
      *
      * @var int
      */
-    const EXCEPT_ITEMID = 4; // phpcs:ignore
-    // public const EXCEPT_ITEMID = 4; // PSR-12 on php 7.1+
+    const RULE_ITEMID = 5; // phpcs:ignore
+    // public const RULE_ITEMID = 4; // PSR-12 on php 7.1+
 
     /**
      * Default time for browser time, if not specified on $exptbrowser
@@ -234,6 +241,32 @@ class PlgSystemAlligovarnish extends JPlugin // phpcs:ignore
     }
 
     /**
+     * Check if is one individual string is a rule, and already break it value
+     * in some parts
+     *
+     * @param  String  $rule  A rule to evaluate
+     *
+     * @return  Array
+     */
+    protected function getRule($rule)
+    {
+        $result = [null, null, -1];
+        $accepted = ['url', 'urlprefix', 'component'];
+        if (isset($rule) && is_string($rule)) {
+            $parts = explode("|", $rule);
+            if (count($parts) !== 3 or in_array($parts[0], $accepted)) {
+                return null;
+            }
+
+            $result[0] = $parts[0];
+            $result[1] = $parts[1];
+            $result[2] = $this->getTimeAsSeconds($parts[2]);
+            return $result;
+        }
+        return null;
+    }
+
+    /**
      * Early check if this is an exception and should be totally ignored
      *
      * @return Int
@@ -245,7 +278,7 @@ class PlgSystemAlligovarnish extends JPlugin // phpcs:ignore
         if ((int) $this->params->get('never_logged_enabled') > 0) {
             if (!JFactory::getUser()->guest) {
                 // $this->isExceptionCustomHTTPHeader();
-                return self::EXCEPT_LOGGED;
+                return self::RULE_LOGGED;
             }
         }
 
@@ -256,7 +289,7 @@ class PlgSystemAlligovarnish extends JPlugin // phpcs:ignore
                 $this->isExceptionCustomHTTPHeader(
                     $this->params->get('never_option_httpheader', '')
                 );
-                return self::EXCEPT_COMPONENT;
+                return self::RULE_COMPONENT;
             }
         }
 
@@ -271,7 +304,7 @@ class PlgSystemAlligovarnish extends JPlugin // phpcs:ignore
                         $this->isExceptionCustomHTTPHeader(
                             $this->params->get('never_prefix_httpheader', '')
                         );
-                        return self::EXCEPT_URLPREFIX;
+                        return self::RULE_URLPREFIX;
                     }
                 }
             }
@@ -285,7 +318,7 @@ class PlgSystemAlligovarnish extends JPlugin // phpcs:ignore
                 $this->isExceptionCustomHTTPHeader(
                     $this->params->get('never_itemid_httpheader', '')
                 );
-                return self::EXCEPT_ITEMID;
+                return self::RULE_ITEMID;
             }
         }
 
