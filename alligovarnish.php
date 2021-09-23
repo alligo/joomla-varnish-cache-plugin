@@ -545,6 +545,8 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
      * Set cache. Should be called ONLY on Joomla front-end. Backend
      * should call $this->setCacheProxy(null) for ensure no cache;
      *
+     * @deprecated
+     *
      * @see setCacheBrowser()
      * @see setCacheProxy()
      *
@@ -585,6 +587,8 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
     /**
      * Extends isException()
      *
+     * @deprecated
+     *
      * @return Void
      *
      * @see isException()
@@ -596,6 +600,8 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
 
     /**
      * Some places of Jooma should never cache
+     *
+     * @deprecated
      *
      * @todo Ainda não está funcional da forma como está sendo chamada. Deve
      *       ser chamada em fase mais inicial da sequencia de eventos do
@@ -657,10 +663,17 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
     ) {
         $this->run += 1;
         $extrainfo = true;
-        // echo "<!-- maxage" . $maxage . " --!>";
-        // JFactory::getApplication()->setHeader('x-teste3', 'valor-teste2', true);
-        JFactory::getApplication()->setHeader('x-debug-run-' . $this->run, $maxage . '-' . $smaxage);
+        $epoch = strtotime(
+            '+' . $maxage . 's',
+            JFactory::getDate()->getTimestamp()
+        );
 
+        if ($this->params->get('debug', "0") === "1") {
+            JFactory::getApplication()->setHeader(
+                'x-cache-debug-run-' . $this->run,
+                $maxage . '-' . $smaxage
+            );
+        }
         // return '';
         $cachecontrolstr = 'no-cache, no-store, must-revalidate';
         if ($maxage === false or $maxage === 0) {
@@ -668,10 +681,17 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
             JFactory::getApplication()->setHeader('Pragma', 'no-cache', true);
             JFactory::getApplication()->setHeader('Expires', '0', true);
         } else {
-            $epoch = strtotime('+' . $maxage . 's', JFactory::getDate()->getTimestamp());
-            JFactory::getApplication()->setHeader('Expires', date('D, j M Y H:i:s T', $epoch), true);
+            JFactory::getApplication()->setHeader(
+                'Expires',
+                date('D, j M Y H:i:s T', $epoch),
+                true
+            );
             if ($extrainfo) {
-                JFactory::getApplication()->setHeader('X-Expires', date('D, j M Y H:i:s T', $epoch), true);
+                JFactory::getApplication()->setHeader(
+                    'X-Expires',
+                    date('D, j M Y H:i:s T', $epoch),
+                    true
+                );
             }
         }
         if ($maxage > 0) {
@@ -686,18 +706,28 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
             $cachecontrolstr = $cachecontrolstr . ', s-maxage=' . (int) $smaxage;
         }
         if (!empty($stale_while_revalidate)) {
-            $cachecontrolstr = $cachecontrolstr . ', stale-while-revalidate=' . (int) $stale_while_revalidate;
+            $cachecontrolstr = $cachecontrolstr
+                . ', stale-while-revalidate=' . (int) $stale_while_revalidate;
         }
         if (!empty($stale_if_error)) {
-            $cachecontrolstr = $cachecontrolstr . ', stale-if-error=' . (int) $stale_if_error;
+            $cachecontrolstr = $cachecontrolstr
+                . ', stale-if-error=' . (int) $stale_if_error;
         }
 
         // echo $cachecontrolstr; die;
 
         // JFactory::getApplication()->setHeader('Cache-Control', $cachecontrolstr, true);
-        JFactory::getApplication()->setHeader('Cache-Control', $cachecontrolstr, true);
+        JFactory::getApplication()->setHeader(
+            'Cache-Control',
+            $cachecontrolstr,
+            true
+        );
         if ($extrainfo) {
-            JFactory::getApplication()->setHeader('X-Cache-Control', $cachecontrolstr, true);
+            JFactory::getApplication()->setHeader(
+                'X-Cache-Control',
+                $cachecontrolstr,
+                true
+            );
         }
     }
 
@@ -885,46 +915,54 @@ class PlgSystemAlligovarnish extends JPlugin// phpcs:ignore
             $stale_if_error,
             (bool) $this->params->get('extrainfo')
         );
-
-        // Deprecated: remove after here
-        /*
-        if ($this->is_site) {
-            $menu_active = JFactory::getApplication()->getMenu()->getActive();
-            $this->itemid = empty($menu_active) || empty($menu_active->id) ? 0 : (int) $menu_active->id;
-            $this->varnishtime = $this->getTimeAsSeconds($this->params->get('varnishtime', ''));
-            $this->browsertime = $this->getTimeAsSeconds($this->params->get('browsertime', ''));
-            $this->exptproxy = $this->getTimes($this->params->get('exptproxy', ''));
-            $this->exptbrowser = $this->getTimes($this->params->get('exptbrowser', ''));
-            $this->extrainfo = (bool) $this->params->get('extrainfo', false);
-            $this->debug_is = (bool) $this->params->get('debug', false);
-            $this->setCache();
-        } else {
-            // Tip for varnish that we REALLY do not want cache this
-            $this->setCacheProxy(null);
-        }
-        if ($this->debug_is && count($this->debug)) {
-            JFactory::getApplication()->setHeader('X-Alligo-Debug', json_encode($this->debug), true);
-        }
-        */
-        // echo "<!-- " . print_r($this->params, true) . '--!>';
     }
 
     private function prepareToCacheGetTime($param_token)
     {
         $result = null;
+        $explained = [];
         if ((int) $this->params->get($param_token . '_enabled') > 0) {
             if (in_array($this->params->get($param_token . '_enabled'), ["1", "2"])) {
-                $result = $this->getTimeAsSeconds($this->params->get($param_token . '_default'));
+                $result = $this->getTimeAsSeconds(
+                    $this->params->get($param_token . '_default')
+                );
+                if (is_numeric($result)) {
+                    $explained[] = (string) $result . ' (default)';
+                }
             }
             // $result = ...(the extra rules here...)
 
-            $custom_time_rule = $this->isRuleAny($this->params->get($param_token . '_custom'));
+            $custom_time_rule = $this->isRuleAny(
+                $this->params->get($param_token . '_custom')
+            );
             // $custom = 3;
-            JFactory::getApplication()->setHeader('x-debug-time-default-' . $param_token, $result, false);
+            // if ($this->params->get('debug', "0") === "1") {
+            //     JFactory::getApplication()->setHeader(
+            //         'x-debug-time-default-' . $param_token,
+            //         (string) $result,
+            //         false
+            //     );
+            // }
             if (!empty($custom_time_rule) && is_integer($custom_time_rule[0])) {
                 $result = $custom_time_rule[0];
+                $explained[] = (string) $result
+                    . ' (custom ' . $custom_time_rule[1][0] . ')';
                 // $custom_time_rule[1]; Reason here.
-                JFactory::getApplication()->setHeader('x-debug-time-custom-' . $param_token, $result, false);
+                // if ($this->params->get('debug', "0") === "1") {
+                //     JFactory::getApplication()->setHeader(
+                //         'x-debug-time-custom-' . $param_token,
+                //         ((string) $result . $custom_time_rule[1][0]),
+                //         false
+                //     );
+                // }
+            }
+
+            if ($this->params->get('debug', "0") === "1") {
+                JFactory::getApplication()->setHeader(
+                    'x-cache-debug-' . $param_token,
+                    implode(', ', $explained),
+                    false
+                );
             }
         }
         return $result;

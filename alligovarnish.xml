@@ -33,7 +33,7 @@
           max-age
           - https://datatracker.ietf.org/doc/html/rfc7234#section-5.2.2.8
         -->
-
+        <!--
         <field
           name="browsertime"
           type="text"
@@ -54,12 +54,13 @@
         />
 
         <field type="spacer" name="spacer-1" hr="true" />
+        -->
 
         <!--
           s-maxage
           - https://datatracker.ietf.org/doc/html/rfc7234#section-5.2.2.9
         -->
-
+        <!--
         <field
           name="varnishtime"
           type="text" default="300s"
@@ -77,6 +78,15 @@
           rows="10"
           cols="5"
           />
+        -->
+        <field
+          name="note_debug"
+          showon="debug:1"
+          type="note"
+          class="alert alert-error"
+          label="Debug enabled"
+          description="Debug mode enabled. Recommeded disable when testing are not more necessary"
+        />
 
         <field
           name="extrainfo"
@@ -99,6 +109,8 @@
           <option value="1">JYES</option>
           <option value="0">JNO</option>
         </field>
+
+
       </fieldset>
 
       <!--
@@ -107,7 +119,7 @@
         - https://www.fastly.com/blog/stale-while-revalidate-stale-if-error-available-today
         - https://docs.varnish-software.com/varnish-cache-plus/vmods/stale/
       -->
-
+      <!--
       <fieldset name="advanced">
         <field
           name="stale-if-error_enabled"
@@ -128,11 +140,6 @@
           description="PLG_SYSTEM_ALLIGOVARNISH_STALE_IF_ERROR_DESC"
           size="4"/>
 
-      <!--
-        stale-if-error
-        - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
-        - https://www.fastly.com/blog/stale-while-revalidate-stale-if-error-available-today
-      -->
 
         <field
           name="stale-while-revalidate_enabled"
@@ -153,12 +160,6 @@
           description="PLG_SYSTEM_ALLIGOVARNISH_STALE_WHILE_REVALIDATE_DESC"
           size="4"/>
 
-      <!--
-        stale-if-error
-        - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
-        - https://www.fastly.com/blog/stale-while-revalidate-stale-if-error-available-today
-      -->
-
         <field
           name="must-revalidate_enabled"
           type="radio"
@@ -170,6 +171,7 @@
           <option value="0">JNO</option>
         </field>
       </fieldset>
+      -->
 
       <fieldset
         name="never"
@@ -377,33 +379,6 @@
           cols="5"
           class="input-xxlarge"
         />
-        <!--
-        <field
-          name="max-age_urllist"
-          showon="max-age_enabled:2"
-          type="textarea"
-          default=""
-          hint="[/page:CacheTime]\n/hotsite-page|30s\n/archive-page|4h"
-          label="max-age (Custom, Exact URL)"
-          description="Apply customization by list of URLs. Use | as separator"
-          rows="5"
-          cols="5"
-          class="input-xxlarge"
-        />
-
-        <field
-          name="max-age_urlprefix"
-          showon="max-age_enabled:2"
-          type="textarea"
-          default=""
-          hint="[/pages/prefix/:CacheTime]\n/hotsite-pages/|30s\n/archived-old-pages/|4h"
-          label="max-age (Custom, URL prefix)"
-          description="Apply customization by list of URLs. Use | as separator"
-          rows="5"
-          cols="5"
-          class="input-xxlarge"
-        />
-        -->
 
         <field type="spacer" name="spacer-e" hr="true" />
 
@@ -488,6 +463,11 @@
 
         <field type="spacer" name="spacer-g" hr="true" />
 
+        <!--
+          stale-if-error
+          - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
+          - https://www.fastly.com/blog/stale-while-revalidate-stale-if-error-available-today
+        -->
 
         <field
           name="stale-if-error_enabled"
